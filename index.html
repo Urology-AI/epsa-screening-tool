@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (function () {
+        try {
+          var LEVELS = [0.875, 0.9375, 1, 1.0625, 1.125, 1.1875, 1.25];
+          var raw = localStorage.getItem('epsaTextScale');
+          var i = raw != null ? parseInt(raw, 10) : NaN;
+          if (!Number.isFinite(i) || i < 0 || i >= LEVELS.length) i = 3;
+          document.documentElement.style.setProperty('--epsa-user-text-scale', String(LEVELS[i]));
+        } catch (e) {}
+      })();
+    </script>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.turso.io wss://*.turso.io https://npiregistry.cms.hhs.gov;">
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="ePSA Screening Tool — Mt Sinai Community Screening" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>ePSA Screening Tool</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

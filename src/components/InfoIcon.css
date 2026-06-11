@@ -1,0 +1,126 @@
+.info-icon-btn {
+  background: none;
+  border: none;
+  color: var(--brand-700);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 0.5rem;
+  opacity: 0.85;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.info-icon-btn:hover {
+  opacity: 1;
+  color: var(--brand-600);
+}
+
+.info-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.theme-dark .info-modal-overlay {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.info-modal {
+  background: var(--surface);
+  color: var(--ink-900);
+  border-radius: var(--radius-md);
+  border: 0.0625rem solid var(--line-100);
+  max-width: 25rem;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.info-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 0.0625rem solid var(--line-100);
+}
+
+.info-modal-header h3 {
+  margin: 0;
+  color: var(--brand-700);
+  font-size: 1.125rem;
+}
+
+.theme-dark .info-modal-header h3 {
+  color: var(--brand-400);
+}
+
+.info-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--ink-500);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.info-modal-close:hover {
+  color: var(--error-600);
+}
+
+.info-modal-body {
+  padding: 1.25rem;
+}
+
+.info-description {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink-800);
+}
+
+.info-sources {
+  border-top: 0.0625rem solid var(--line-100);
+  padding-top: 1rem;
+}
+
+.info-sources strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--brand-700);
+}
+
+.theme-dark .info-sources strong {
+  color: var(--brand-400);
+}
+
+.info-sources ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.info-sources li {
+  margin-bottom: 0.25rem;
+}
+
+.info-sources a {
+  color: var(--brand-600);
+  text-decoration: none;
+  font-size: 0.8125rem;
+}
+
+.theme-dark .info-sources a {
+  color: var(--brand-400);
+}
+
+.info-sources a:hover {
+  text-decoration: underline;
+}

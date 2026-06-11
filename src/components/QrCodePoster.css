@@ -1,0 +1,214 @@
+/* ── toolbar (screen only) ── */
+.qrp-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-200);
+  gap: 0.75rem;
+}
+.qrp-back {
+  background: none;
+  border: none;
+  color: var(--brand-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+}
+.qrp-back:hover { background: var(--surface-subtle); }
+
+.qrp-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.25rem;
+  background: var(--ms-navy, #212070);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.qrp-print-btn:hover { opacity: 0.88; }
+.theme-dark .qrp-print-btn {
+  background: var(--brand-600);
+}
+
+/* ── root wrapper ── */
+.qrp-root {
+  min-height: 100vh;
+  background: var(--surface-subtle);
+}
+
+/* ── printable poster ── */
+.qrp-poster {
+  max-width: 680px;
+  margin: 2rem auto;
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--line-200);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* header band — always navy regardless of theme (brand identity) */
+.qrp-header {
+  background: #0f4f7a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.qrp-logo {
+  height: 48px;
+  width: auto;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+}
+.qrp-initiative {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-bottom: 0.15rem;
+}
+.qrp-app-name {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.qrp-tagline {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.2rem;
+}
+
+/* body */
+.qrp-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 2rem 1.25rem;
+  text-align: center;
+}
+.qrp-headline {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--ink-900);
+  margin: 0 0 0.5rem;
+}
+.qrp-sub {
+  font-size: 1rem;
+  color: var(--ink-600);
+  margin: 0 0 1.75rem;
+}
+.qrp-qr-wrap {
+  background: #fff;   /* QR always on white for scannability */
+  border: 2px solid var(--line-200);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  margin-bottom: 1rem;
+}
+.qrp-canvas {
+  display: block;
+  border-radius: 6px;
+}
+.qrp-scan-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--brand-700, #0f4f7a);
+  margin: 0 0 0.35rem;
+}
+.theme-dark .qrp-scan-label {
+  color: var(--brand-600);
+}
+.qrp-url {
+  font-size: 0.8rem;
+  color: var(--ink-600);
+  word-break: break-all;
+  margin: 0;
+}
+
+/* services strip */
+.qrp-services {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: var(--brand-50);
+  border-top: 1px solid var(--brand-400);
+  border-bottom: 1px solid var(--brand-400);
+  padding: 0.85rem 2rem;
+  flex-wrap: wrap;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.qrp-service {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand-700, #1e40af);
+}
+.theme-dark .qrp-service {
+  color: var(--brand-500);
+}
+.qrp-divider {
+  width: 1px;
+  height: 1rem;
+  background: var(--brand-400);
+}
+
+/* footer */
+.qrp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 2rem;
+  font-size: 0.875rem;
+  color: var(--ink-800);
+  background: var(--surface);
+}
+.qrp-footer-dot { color: var(--ink-400); }
+
+.qrp-disclaimer {
+  font-size: 0.7rem;
+  color: var(--ink-500);
+  text-align: center;
+  padding: 0 2rem 1.25rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── print styles ── */
+@media print {
+  .no-print { display: none !important; }
+
+  .qrp-root {
+    background: #fff;
+    min-height: unset;
+  }
+  .qrp-poster {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    page-break-inside: avoid;
+  }
+  .qrp-headline { color: #111827; }
+  .qrp-sub      { color: #4b5563; }
+  .qrp-url      { color: #6b7280; }
+  .qrp-footer   { color: #374151; background: #fff; }
+  .qrp-disclaimer { color: #9ca3af; }
+}

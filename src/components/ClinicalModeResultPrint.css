@@ -1,0 +1,127 @@
+.cmrp-content {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.cmrp-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #0f4f7a;
+  margin-bottom: 1rem;
+}
+
+.cmrp-logo-wrap img {
+  height: 48px;
+  width: auto;
+}
+
+.cmrp-header-text {
+  flex: 1;
+}
+
+.cmrp-header-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f4f7a;
+}
+
+.cmrp-header-sub {
+  font-size: 0.6875rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.cmrp-session-ref {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.cmrp-session-ref-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.cmrp-session-ref-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: monospace;
+  color: #0f4f7a;
+}
+
+.cmrp-tier-block {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: #f8fafc;
+  margin-bottom: 1rem;
+}
+
+.cmrp-tier-eyebrow {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  opacity: 0.75;
+  margin-bottom: 4px;
+}
+
+.cmrp-tier-label {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cmrp-tier-body {
+  margin: 0.4rem 0 0;
+  font-size: 0.6875rem;
+  color: #374151;
+}
+
+.cmrp-section-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0f4f7a;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 2px;
+}
+
+.cmrp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+}
+
+.cmrp-row:nth-child(even) {
+  background: #f8fafc;
+}
+
+.cmrp-cell {
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.cmrp-cell--label {
+  width: 45%;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cmrp-cell--value {
+  color: #111827;
+}
+
+.cmrp-disclaimer {
+  font-size: 0.625rem;
+  color: #9ca3af;
+  text-align: center;
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+}
