@@ -132,3 +132,16 @@ export async function setSessionConsent(_uid, session, consented) {
   );
   setLocal(sessions);
 }
+
+export async function updateSessionStep2(_uid, session, step2Data) {
+  const sessions = getLocal().map(s => {
+    if (s.id !== session.id) return s;
+    return {
+      ...s,
+      step2: step2Data,
+      status: 'STEP2_COMPLETE',
+    };
+  });
+  setLocal(sessions);
+  return sessions.find(s => s.id === session.id) ?? null;
+}

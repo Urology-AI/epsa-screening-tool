@@ -5,7 +5,7 @@ import {
   SendIcon, RefreshCwIcon, PlusIcon, ZapIcon,
   CloudUploadIcon, CloudDownloadIcon
 } from 'lucide-react';
-import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, mergeSessions, setSessionConsent } from '../services/clinicalSessionService';
+import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, mergeSessions, setSessionConsent, updateSessionStep2 } from '../services/clinicalSessionService';
 import { isTursoConfigured, pushSessions, pullSessions, getSyncedKeys, syncKey, markPendingDelete, getPendingDeleteCount, isPushable } from '../services/tursoService';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
@@ -27,12 +27,92 @@ function formatDate(iso) {
   } catch { return iso; }
 }
 
-function SessionRow({ session, uid, onDeleted, onConsented, tursoReady, tursoSynced }) {
+function Part2EntryForm({ session, uid, onSaved, onCancel, tursoReady }) {
+  const [psa, setPsa] = useState('');
+  const [pirads, setPirads] = useState('0');
+  const [onHormonalTherapy, setOnHormonalTherapy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    const psaNum = parseFloat(psa);
+    if (!psa || isNaN(psaNum) || psaNum < 0) { setError('Enter a valid PSA value (ng/mL).'); return; }
+    setSaving(true);
+    setError(null);
+    try {
+      const step2 = {
+        psa: psaNum,
+        knowPsa: true,
+        pirads,
+        knowPirads: pirads !== '0',
+        onHormonalTherapy,
+        hormonalTherapyType: '',
+      };
+      const updated = await updateSessionStep2(uid, session, step2);
+      if (tursoReady && updated) await pushSessions([updated]);
+      onSaved();
+    } catch (err) {
+      setError(err.message || 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSave} className="csm-part2-form">
+      <h4 className="csm-part2-form-title">Enter PSA Results</h4>
+      <div className="csm-part2-fields-entry">
+        <label className="csm-part2-label">
+          PSA (ng/mL)
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={psa}
+            onChange={e => setPsa(e.target.value)}
+            placeholder="e.g. 4.2"
+            required
+            autoFocus
+            className="csm-part2-input"
+          />
+        </label>
+        <label className="csm-part2-label">
+          PI-RADS score
+          <select value={pirads} onChange={e => setPirads(e.target.value)} className="csm-part2-input">
+            <option value="0">Not available</option>
+            <option value="1">1 — Very low</option>
+            <option value="2">2 — Low</option>
+            <option value="3">3 — Intermediate</option>
+            <option value="4">4 — High</option>
+            <option value="5">5 — Very high</option>
+          </select>
+        </label>
+        <label className="csm-part2-label csm-part2-label--check">
+          <input type="checkbox" checked={onHormonalTherapy} onChange={e => setOnHormonalTherapy(e.target.checked)} />
+          On hormonal therapy
+        </label>
+      </div>
+      {error && <p className="csm-part2-error">{error}</p>}
+      <div className="csm-part2-form-btns">
+        <button type="submit" disabled={saving} className="csm-action-btn csm-action-btn--primary">
+          {saving ? 'Saving…' : 'Save PSA Results'}
+        </button>
+        <button type="button" onClick={onCancel} className="csm-action-btn">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoReady, tursoSynced }) {
   const [expanded, setExpanded] = useState(false);
   const [pushing, setPushing] = useState(false);
   const [pushStatus, setPushStatus] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [consenting, setConsenting] = useState(false); // false | 'confirm' | 'working' | 'err'
+  const [enteringPart2, setEnteringPart2] = useState(false);
   const noConsent = session.consented === false;
 
   const tier = session.engineResult?.epsaTierKey || 'unknown';
@@ -139,6 +219,16 @@ function SessionRow({ session, uid, onDeleted, onConsented, tursoReady, tursoSyn
             <button type="button" className="csm-action-btn" onClick={handleExportThis} title="Export this session as JSON">
               <DownloadIcon size={14} /> Export
             </button>
+            {!hasPost && (
+              <button
+                type="button"
+                className="csm-action-btn csm-action-btn--primary"
+                onClick={() => setEnteringPart2(v => !v)}
+                title="Enter PSA result and optional PI-RADS score for this patient"
+              >
+                <ZapIcon size={14} /> {enteringPart2 ? 'Cancel' : 'Enter PSA Results'}
+              </button>
+            )}
             <button
               type="button"
               className={`csm-action-btn csm-action-btn--redcap${pushStatus === 'ok' ? ' csm-action-btn--ok' : pushStatus === 'err' ? ' csm-action-btn--err' : ''}`}
@@ -176,6 +266,16 @@ function SessionRow({ session, uid, onDeleted, onConsented, tursoReady, tursoSyn
               {confirming ? 'Confirm delete?' : 'Delete'}
             </button>
           </div>
+
+          {enteringPart2 && !hasPost && (
+            <Part2EntryForm
+              session={session}
+              uid={uid}
+              tursoReady={tursoReady}
+              onSaved={() => { setEnteringPart2(false); onUpdated?.(); }}
+              onCancel={() => setEnteringPart2(false)}
+            />
+          )}
 
           {session.engineResult && session.formData && (
             <div className="csm-result-preview print-target">
@@ -439,6 +539,7 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
               uid={uid}
               onDeleted={handleSessionDeleted}
               onConsented={handleSessionConsented}
+              onUpdated={refresh}
               tursoReady={tursoReady}
               tursoSynced={syncedKeys.has(syncKey(s))}
             />
