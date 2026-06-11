@@ -13,8 +13,6 @@ import { FH_MAP, DIET_MAP, deriveIpssFromQol, expandShimSingle } from '../utils/
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
 import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, ArrowLeftIcon, ShieldCheckIcon, LockIcon, FileTextIcon, PrinterIcon } from 'lucide-react';
-import ClinicalSessionsManager from './ClinicalSessionsManager.jsx';
-import './ClinicalSessionsManager.css';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
 import { getOrCreateUid, saveClinicalSession, generateSessionRef } from '../services/clinicalSessionService';
@@ -412,7 +410,7 @@ export default function ClinicalModeFlow() {
   const [result, setResult] = useState(restored?.result ?? null);
   const [ageError, setAgeError] = useState('');
   const [uid, setUid] = useState(null);
-  const [showPinModal, setShowPinModal] = useState(false);
+  const [idleSecondsLeft, setIdleSecondsLeft] = useState(null); // null = not counting
   const [sessionRef, setSessionRef] = useState(restored?.sessionRef ?? null);
   // null | 'saving' | 'saved' | 'error' | 'local' — an interrupted 'saving'
   // restores as 'error' (the local copy uploads on the next staff sync).
@@ -424,6 +422,41 @@ export default function ClinicalModeFlow() {
   useEffect(() => {
     getOrCreateUid().then(setUid).catch(() => {});
   }, []);
+
+  // Kiosk idle-reset: when the result screen is showing and there's no
+  // interaction for IDLE_WARN_S seconds, show a countdown banner, then reset.
+  const IDLE_WARN_S = 90;
+  const IDLE_COUNTDOWN_S = 15;
+  useEffect(() => {
+    if (screen !== 'result' && screen !== 'storage_consent' && screen !== 'study_consent') {
+      setIdleSecondsLeft(null);
+      return;
+    }
+    let warnTimer, countdownInterval;
+    const resetTimers = () => {
+      clearTimeout(warnTimer);
+      clearInterval(countdownInterval);
+      setIdleSecondsLeft(null);
+      warnTimer = setTimeout(() => {
+        setIdleSecondsLeft(IDLE_COUNTDOWN_S);
+        countdownInterval = setInterval(() => {
+          setIdleSecondsLeft(s => {
+            if (s <= 1) { clearInterval(countdownInterval); handleReset(); return null; }
+            return s - 1;
+          });
+        }, 1000);
+      }, IDLE_WARN_S * 1000);
+    };
+    const events = ['pointerdown', 'keydown', 'scroll'];
+    events.forEach(e => window.addEventListener(e, resetTimers, { passive: true }));
+    resetTimers();
+    return () => {
+      clearTimeout(warnTimer);
+      clearInterval(countdownInterval);
+      events.forEach(e => window.removeEventListener(e, resetTimers));
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
 
   // Keep the active session snapshot in sync so reloads land back here.
   useEffect(() => {
@@ -594,31 +627,21 @@ export default function ClinicalModeFlow() {
     return <QrCodePoster onBack={() => setShowQrPoster(false)} />;
   }
 
-  if (screen === 'manage') {
-    return (
-      <ClinicalSessionsManager
-        uid={uid}
-        onBack={() => { setScreen('welcome'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-        onNewSession={() => { setScreen('form'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-      />
-    );
-  }
-
   if (screen === 'welcome') {
     return (
       <>
+        {idleSecondsLeft !== null && (
+          <div className="qef-idle-banner" role="alert">
+            Session ending in {idleSecondsLeft}s&ensp;·&ensp;
+            <button onClick={handleReset}>Start over now</button>
+          </div>
+        )}
         <WelcomeScreen
           onStart={() => { setScreen('form'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          onStaffAccess={() => setShowPinModal(true)}
+          onStaffAccess={() => { window.location.href = '/admin'; }}
           onPrintForm={() => setShowPrintForm(true)}
           onPrintQr={() => setShowQrPoster(true)}
         />
-        {showPinModal && (
-          <StaffPinModal
-            onSuccess={() => { setShowPinModal(false); setScreen('manage'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            onClose={() => setShowPinModal(false)}
-          />
-        )}
       </>
     );
   }
@@ -648,6 +671,12 @@ export default function ClinicalModeFlow() {
   if (screen === 'result' && result?.engineResult) {
     return (
       <div className="qef-root">
+        {idleSecondsLeft !== null && (
+          <div className="qef-idle-banner" role="alert">
+            Session ending in {idleSecondsLeft}s&ensp;·&ensp;
+            <button onClick={handleReset}>Start over now</button>
+          </div>
+        )}
         <div className="qef-result-header">
           <button type="button" className="qef-logo-home-btn" onClick={() => { handleReset(); }} title="Go to home">
             <img src="/sinai_dark.png" alt="Mount Sinai" style={{ height: '1.5rem', width: 'auto' }} onError={(e) => { e.target.style.display = 'none'; }} />
