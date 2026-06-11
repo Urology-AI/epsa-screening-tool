@@ -16,7 +16,7 @@ import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, 
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
 import { getOrCreateUid, saveClinicalSession, generateSessionRef } from '../services/clinicalSessionService';
-import { isTursoConfigured, pushSessions } from '../services/tursoService';
+import { isSupabaseConfigured, pushSessions } from '../services/supabaseService';
 
 /* ─── BMI helpers ─── */
 function calcBmi(ft, inch, lbs) {
@@ -545,7 +545,7 @@ export default function ClinicalModeFlow() {
       setCloudStatus('local');
       return;
     }
-    if (isTursoConfigured()) {
+    if (isSupabaseConfigured()) {
       setCloudStatus('saving');
       localSave
         .then((id) => pushSessions([{
