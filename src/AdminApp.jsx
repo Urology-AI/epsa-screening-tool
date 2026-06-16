@@ -10,9 +10,6 @@ import './App.css';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
-// MSAL v2+ requires explicit initialization before use
-msalInstance.initialize().catch(console.error);
-
 function AdminContent() {
   const { instance, accounts, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -23,7 +20,7 @@ function AdminContent() {
     getOrCreateUid().then(setUid).catch(() => {});
   }, []);
 
-  // Handle redirect response on return from Microsoft login
+  // Handle redirect response — MsalProvider calls initialize() before rendering children
   useEffect(() => {
     instance.handleRedirectPromise().catch(err => {
       setLoginError(err.message || 'Login failed');
