@@ -79,16 +79,31 @@ export default {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
+    const redcapText = await redcapRes.text();
+    console.log('REDCap HTTP status:', redcapRes.status);
+    console.log('REDCap response body:', redcapText);
+
     if (!redcapRes.ok) {
-      const text = await redcapRes.text();
-      console.error('REDCap error:', redcapRes.status, text);
-      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}` }), {
+      console.error('REDCap HTTP error:', redcapRes.status, redcapText);
+      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}`, detail: redcapText }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    // REDCap returns HTTP 200 even for errors — check the body for error strings
+    if (redcapText.startsWith('{"error"') || redcapText.toLowerCase().includes('"error"')) {
+      let parsed;
+      try { parsed = JSON.parse(redcapText); } catch { /* not JSON */ }
+      const detail = parsed?.error ?? redcapText;
+      console.error('REDCap application error:', detail);
+      return new Response(JSON.stringify({ error: 'REDCap rejected the record', detail }), {
+        status: 422,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, redcapResponse: redcapText }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
