@@ -81,11 +81,20 @@ export default {
         method: 'POST',
         body: params,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        redirect: 'error',  // fail fast if URL redirects (redirects silently downgrade POST→GET)
+        redirect: 'manual',
       });
     } catch (fetchErr) {
-      console.error('REDCap fetch failed (redirect or network):', fetchErr);
-      return new Response(JSON.stringify({ error: 'Could not reach REDCap — check REDCAP_API_URL (must be the final URL, no redirect, trailing slash required)' }), {
+      console.error('REDCap fetch failed (network error):', fetchErr);
+      return new Response(JSON.stringify({ error: 'Could not reach REDCap — check REDCAP_API_URL' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (redcapRes.status >= 300 && redcapRes.status < 400) {
+      const location = redcapRes.headers.get('Location') || '(unknown)';
+      console.error('REDCap URL redirects to:', location);
+      return new Response(JSON.stringify({ error: 'REDCAP_API_URL redirects — use the final URL directly', location }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
