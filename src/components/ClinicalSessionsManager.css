@@ -104,7 +104,7 @@
   display: flex;
   gap: 0.5rem;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  border-bottom: 1px solid var(--line-200);
   flex-wrap: wrap;
 }
 
@@ -116,13 +116,13 @@
   border-radius: 7px;
   font-size: 0.8125rem;
   font-weight: 600;
-  border: 1px solid var(--border-color, #d1d5db);
-  background: var(--card-bg, #fff);
-  color: var(--text-primary, #111827);
+  border: 1px solid var(--line-200);
+  background: var(--surface);
+  color: var(--ink-900);
   cursor: pointer;
   transition: background 0.15s;
 }
-.csm-toolbar-btn:hover:not(:disabled) { background: var(--hover-bg, #f3f4f6); }
+.csm-toolbar-btn:hover:not(:disabled) { background: var(--surface-subtle); }
 .csm-toolbar-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .csm-toolbar-btn--primary {
   background: var(--ms-navy, #212070);
@@ -163,15 +163,15 @@
 
 .csm-empty {
   text-align: center;
-  color: var(--text-muted, #6b7280);
+  color: var(--ink-600);
   font-size: 0.9rem;
   padding: 2.5rem 1rem;
 }
 
 /* ── Session row ── */
 .csm-row {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--surface);
+  border: 1px solid var(--line-200);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -188,7 +188,7 @@
   text-align: left;
   font-family: inherit;
 }
-.csm-row-header:hover { background: var(--hover-bg, #f9fafb); }
+.csm-row-header:hover { background: var(--surface-subtle); }
 
 .csm-tier-dot {
   width: 10px;
@@ -199,7 +199,7 @@
 
 .csm-row-date {
   font-size: 0.8rem;
-  color: var(--text-muted, #6b7280);
+  color: var(--ink-600);
   flex-shrink: 0;
 }
 
@@ -217,7 +217,7 @@
 
 .csm-row-meta {
   font-size: 0.8125rem;
-  color: var(--text-secondary, #374151);
+  color: var(--ink-700);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -268,7 +268,7 @@
 
 /* ── Row body ── */
 .csm-row-body {
-  border-top: 1px solid var(--border-color, #e5e7eb);
+  border-top: 1px solid var(--line-200);
   padding: 0.75rem 1rem 1rem;
 }
 
@@ -287,12 +287,12 @@
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid var(--border-color, #d1d5db);
-  background: var(--card-bg, #fff);
-  color: var(--text-primary, #111827);
+  border: 1px solid var(--line-200);
+  background: var(--surface);
+  color: var(--ink-900);
   cursor: pointer;
 }
-.csm-action-btn:hover:not(:disabled) { background: var(--hover-bg, #f3f4f6); }
+.csm-action-btn:hover:not(:disabled) { background: var(--surface-subtle); }
 .csm-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .csm-action-btn--redcap { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
@@ -332,7 +332,7 @@
   gap: 0.25rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--text-secondary, #374151);
+  color: var(--ink-700);
   min-width: 140px;
 }
 .csm-part2-label--check {
@@ -344,11 +344,11 @@
 }
 .csm-part2-input {
   padding: 0.4rem 0.6rem;
-  border: 1px solid var(--border-color, #d1d5db);
+  border: 1px solid var(--line-200);
   border-radius: 6px;
   font-size: 0.85rem;
   background: #fff;
-  color: var(--text-primary, #111827);
+  color: var(--ink-900);
 }
 .csm-part2-error {
   margin: 0 0 0.5rem;
@@ -362,14 +362,14 @@
 
 /* ── Result preview (read-only) ── */
 .csm-result-preview {
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--line-200);
   border-radius: 8px;
   overflow: hidden;
 }
 
 /* ── Part 2 summary panel ── */
 .csm-part2-summary {
-  border-top: 1px solid var(--border-color, #e5e7eb);
+  border-top: 1px solid var(--line-200);
   padding: 0.875rem 1rem;
   background: #faf5ff;
 }
@@ -386,14 +386,14 @@
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
   font-size: 0.8125rem;
-  color: var(--text-secondary, #374151);
+  color: var(--ink-700);
 }
 
 /* ── Storage note ── */
 .csm-storage-note {
   text-align: center;
   font-size: 0.7rem;
-  color: var(--text-muted, #9ca3af);
+  color: var(--ink-500);
   padding: 0.75rem 1rem 1.25rem;
 }
 
@@ -410,7 +410,7 @@
 }
 
 .csm-pin-modal {
-  background: var(--card-bg, #fff);
+  background: var(--surface);
   border-radius: 14px;
   padding: 2rem 1.75rem;
   width: 100%;
@@ -436,14 +436,14 @@
 .csm-pin-title {
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--text-primary, #111827);
+  color: var(--ink-900);
   margin: 0;
   text-align: center;
 }
 
 .csm-pin-sub {
   font-size: 0.8125rem;
-  color: var(--text-muted, #6b7280);
+  color: var(--ink-600);
   margin: -0.5rem 0 0;
   text-align: center;
 }
@@ -451,15 +451,15 @@
 .csm-pin-input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid var(--border-color, #d1d5db);
+  border: 2px solid var(--line-200);
   border-radius: 8px;
   font-size: 1.25rem;
   letter-spacing: 0.25em;
   text-align: center;
   font-family: monospace;
   outline: none;
-  background: var(--input-bg, #fff);
-  color: var(--text-primary, #111827);
+  background: var(--surface);
+  color: var(--ink-900);
 }
 .csm-pin-input:focus { border-color: var(--ms-navy, #212070); }
 .csm-pin-input--error { border-color: #ef4444; }
@@ -488,19 +488,19 @@
 .csm-pin-cancel {
   background: none;
   border: none;
-  color: var(--text-muted, #6b7280);
+  color: var(--ink-600);
   font-size: 0.8125rem;
   cursor: pointer;
   text-decoration: underline;
 }
-.csm-pin-cancel:hover { color: var(--text-primary, #111827); }
+.csm-pin-cancel:hover { color: var(--ink-900); }
 
 /* ── Staff link on welcome screen ── */
 .qef-staff-link {
   display: block;
   text-align: center;
   font-size: 0.7rem;
-  color: var(--text-muted, #9ca3af);
+  color: var(--ink-500);
   background: none;
   border: none;
   cursor: pointer;
@@ -540,3 +540,34 @@
 }
 .csm-action-btn--consent { color: #b45309; border-color: #fde68a; background: #fffbeb; }
 .csm-action-btn--consent:hover { background: #fef3c7; }
+
+/* ── Dark-mode overrides for light-pastel surfaces ── */
+.theme-dark .csm-busflow-banner {
+  background: rgba(59,130,246,0.12);
+  border-bottom-color: rgba(59,130,246,0.3);
+}
+.theme-dark .csm-busflow-text strong { color: var(--ink-900); }
+.theme-dark .csm-busflow-text span { color: var(--ink-700); }
+
+.theme-dark .csm-row-ref {
+  color: var(--brand-600);
+  background: rgba(6,171,235,0.12);
+}
+
+.theme-dark .csm-part2-form {
+  background: rgba(6,171,235,0.08);
+  border-color: rgba(6,171,235,0.25);
+}
+.theme-dark .csm-part2-form-title { color: var(--brand-600); }
+.theme-dark .csm-part2-input {
+  background: var(--surface-subtle);
+  border-color: var(--line-200);
+  color: var(--ink-900);
+}
+
+.theme-dark .csm-part2-summary {
+  background: rgba(124,58,237,0.1);
+}
+.theme-dark .csm-part2-title { color: #c4b5fd; }
+
+.theme-dark .csm-pin-overlay { background: rgba(0,0,0,0.7); }
