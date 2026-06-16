@@ -131,6 +131,8 @@
 }
 .csm-toolbar-btn--primary:hover { background: #1a1959; }
 .csm-toolbar-btn--loading { opacity: 0.7; cursor: wait; }
+.csm-toolbar-btn--ok { color: #166534; border-color: #bbf7d0; background: #dcfce7; }
+.csm-toolbar-btn--err { color: #991b1b; border-color: #fecaca; background: #fee2e2; }
 .csm-toolbar-btn--danger { color: #991b1b; }
 .csm-toolbar-btn--danger:hover:not(:disabled) { background: #fee2e2; border-color: #fecaca; }
 .csm-toolbar-btn--confirm { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; font-weight: 800; }
