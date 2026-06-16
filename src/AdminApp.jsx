@@ -9,6 +9,7 @@ import { LockIcon, LogOutIcon } from 'lucide-react';
 import './App.css';
 
 const msalInstance = new PublicClientApplication(msalConfig);
+const msalReady = msalInstance.initialize();
 
 function AdminContent() {
   const { instance, accounts, inProgress } = useMsal();
@@ -144,6 +145,14 @@ function AdminContent() {
 }
 
 export default function AdminApp() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    msalReady.then(() => setReady(true));
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <MsalProvider instance={msalInstance}>
       <AdminContent />
