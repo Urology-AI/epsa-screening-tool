@@ -6,7 +6,7 @@ import {
   CloudUploadIcon, CloudDownloadIcon
 } from 'lucide-react';
 import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, mergeSessions, setSessionConsent, updateSessionStep2 } from '../services/clinicalSessionService';
-import { isTursoConfigured, pushSessions, pullSessions, getSyncedKeys, syncKey, markPendingDelete, getPendingDeleteCount, isPushable } from '../services/tursoService';
+import { isTursoConfigured, pushSessions, pullSessions, getSyncedKeys, syncKey, markPendingDelete, getPendingDeleteCount, isPushable, markRedcapPushed } from '../services/tursoService';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
 import './ClinicalSessionsManager.css';
@@ -139,8 +139,14 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
     setPushing(true);
     setPushStatus(null);
     try {
-      await submitToRedcap(session.formData, session.sessionRef);
+      const result = await submitToRedcap(session.formData, session.sessionRef);
+      if (!result.success) throw new Error(result.error);
       setPushStatus('ok');
+      // Persist the timestamp locally and in Turso
+      if (tursoReady) {
+        await markRedcapPushed(session).catch(() => {});
+      }
+      await onUpdated?.();
     } catch {
       setPushStatus('err');
     } finally {
@@ -199,6 +205,11 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
             No consent
           </span>
         )}
+        {session.redcapPushedAt && (
+          <span className="csm-row-badge csm-row-badge--redcap" title={`Pushed to REDCap on ${new Date(session.redcapPushedAt).toLocaleString()}`}>
+            REDCap ✓
+          </span>
+        )}
         {tursoReady && !noConsent && (
           <span
             className={`csm-row-badge csm-row-badge--${tursoSynced ? 'synced' : 'unsynced'}`}
@@ -229,16 +240,22 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
                 <ZapIcon size={14} /> {enteringPart2 ? 'Cancel' : 'Enter PSA Results'}
               </button>
             )}
-            <button
-              type="button"
-              className={`csm-action-btn csm-action-btn--redcap${pushStatus === 'ok' ? ' csm-action-btn--ok' : pushStatus === 'err' ? ' csm-action-btn--err' : ''}`}
-              onClick={handlePushRedcap}
-              disabled={pushing}
-              title="Push to REDCap"
-            >
-              <SendIcon size={14} />
-              {pushing ? 'Pushing…' : pushStatus === 'ok' ? 'Sent!' : pushStatus === 'err' ? 'Failed' : 'Push to REDCap'}
-            </button>
+            {tursoSynced && (
+              <button
+                type="button"
+                className={`csm-action-btn csm-action-btn--redcap${pushStatus === 'ok' ? ' csm-action-btn--ok' : pushStatus === 'err' ? ' csm-action-btn--err' : ''}`}
+                onClick={handlePushRedcap}
+                disabled={pushing}
+                title={session.redcapPushedAt ? `Last pushed ${new Date(session.redcapPushedAt).toLocaleString()}` : 'Push to REDCap'}
+              >
+                <SendIcon size={14} />
+                {pushing ? 'Pushing…'
+                  : pushStatus === 'ok' ? 'Sent!'
+                  : pushStatus === 'err' ? 'Failed'
+                  : session.redcapPushedAt ? 'Re-push to REDCap'
+                  : 'Push to REDCap'}
+              </button>
+            )}
             {noConsent && (
               <button
                 type="button"
