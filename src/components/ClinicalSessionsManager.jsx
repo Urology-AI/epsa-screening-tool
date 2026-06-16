@@ -138,14 +138,9 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, cloudRead
     if (!session.formData) return;
     setPushing(true);
     setPushStatus(null);
-    try {
-      await submitToRedcap(session.formData, session.sessionRef);
-      setPushStatus('ok');
-    } catch {
-      setPushStatus('err');
-    } finally {
-      setPushing(false);
-    }
+    const result = await submitToRedcap(session.formData, session.sessionRef);
+    setPushStatus(result.success ? 'ok' : 'err');
+    setPushing(false);
   }
 
   function handlePrint() {

@@ -79,10 +79,16 @@ export default {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    if (!redcapRes.ok) {
-      const text = await redcapRes.text();
-      console.error('REDCap error:', redcapRes.status, text);
-      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}` }), {
+    const redcapBody = await redcapRes.text();
+    console.log('REDCap response:', redcapRes.status, redcapBody.slice(0, 200));
+
+    if (!redcapRes.ok || redcapBody.startsWith('ERROR') || redcapBody.trimStart().startsWith('<')) {
+      const isHtml = redcapBody.trimStart().startsWith('<');
+      const errorMsg = isHtml
+        ? 'REDCap API URL is misconfigured (received HTML login page instead of API response)'
+        : redcapBody || `REDCap returned HTTP ${redcapRes.status}`;
+      console.error('REDCap error:', redcapRes.status, errorMsg);
+      return new Response(JSON.stringify({ error: errorMsg }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
