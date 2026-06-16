@@ -15,15 +15,45 @@
  * Build a record matching the clinical mode instrument.
  * formData is the shape produced by ClinicalModeFlow handleSubmit.
  */
+// REDCap coded value maps (data dictionary field → app value → REDCap code)
+const RACE_MAP = {
+  'white':           1,
+  'african-american': 2,
+  'hispanic':        3,
+  'asian':           4,
+  'mixed':           5,
+  'american-indian': 6,
+  'native-hawaiian': 6,
+  'other':           6,
+};
+
+const GENETIC_RISK_MAP = {
+  'yes':      1,
+  'positive': 1,
+  'no':       2,
+  'negative': 2,
+  'unknown':  3,
+};
+
+// chemical_exposure: app uses 'no'/'wtc_911'; REDCap uses 'none'/'nine_eleven'
+const CHEM_MAP = {
+  'no':             'none',
+  'none':           'none',
+  'agent_orange':   'agent_orange',
+  'wtc_911':        'nine_eleven',
+  'nine_eleven':    'nine_eleven',
+  'other_chemical': 'other_chemical',
+  'unknown':        'unknown',
+};
+
+// family_history: app sends 'unknown' string; REDCap uses 3
+const FAMILY_MAP = {
+  0: 0, 1: 1, 2: 2,
+  'unknown': 3,
+};
+
 function buildClinicalRecord(formData, sessionRef) {
-  // chemical_exposure in form: no | agent_orange | wtc_911 | other_chemical
-  // CSV only has: no | yes | unknown
-  const chemRaw = formData.chemicalExposure;
-  const chemical_exposure =
-    chemRaw === 'no' ? 'no'
-    : chemRaw === 'unknown' ? 'unknown'
-    : chemRaw ? 'yes'
-    : undefined;
+  const chemical_exposure = CHEM_MAP[formData.chemicalExposure] ?? undefined;
 
   // Convert height/weight to both unit systems for REDCap
   const heightFt  = formData.metricH ? undefined : (parseFloat(formData.heightFt) || undefined);
@@ -41,11 +71,11 @@ function buildClinicalRecord(formData, sessionRef) {
 
     // patient_info
     age:       formData.age,
-    race_epsa: formData.race,
+    race_epsa: RACE_MAP[formData.race] ?? undefined,
 
     // clinical_inputs — Family & Genetic Risk
-    family_history:  formData.familyHistory,  // 0 | 1 | 2 | unknown
-    genetic_risk:    formData.brcaStatus,     // yes | no | unknown
+    family_history:  FAMILY_MAP[formData.familyHistory] ?? undefined,
+    genetic_risk:    GENETIC_RISK_MAP[formData.brcaStatus] ?? undefined,
     inflammation_hx: formData.inflammationHistory,
 
     // clinical_inputs — Body (separate height/weight fields)
