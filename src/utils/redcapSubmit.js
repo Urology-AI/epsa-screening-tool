@@ -25,19 +25,35 @@ function buildClinicalRecord(formData, sessionRef) {
     : chemRaw ? 'yes'
     : undefined;
 
+  // Convert height/weight to both unit systems for REDCap
+  const heightFt  = formData.metricH ? undefined : (parseFloat(formData.heightFt) || undefined);
+  const heightIn  = formData.metricH ? undefined : (parseFloat(formData.heightIn) || 0);
+  const heightCm  = formData.metricH
+    ? (parseFloat(formData.heightCm) || undefined)
+    : (heightFt != null ? Math.round(((heightFt * 12) + heightIn) * 2.54) : undefined);
+  const weightLbs = formData.metricW ? undefined : (parseFloat(formData.weightLbs) || undefined);
+  const weightKg  = formData.metricW
+    ? (parseFloat(formData.weightKg) || undefined)
+    : (weightLbs != null ? parseFloat((weightLbs * 0.453592).toFixed(1)) : undefined);
+
   const record = {
     record_id: sessionRef ?? `cm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
 
     // patient_info
-    age:  formData.age,
-    race: formData.race,
+    age:       formData.age,
+    race_epsa: formData.race,
 
     // clinical_inputs — Family & Genetic Risk
-    family_history: formData.familyHistory,   // 0 | 1 | 2 | unknown
-    genetic_risk:   formData.brcaStatus,      // yes | no | unknown
+    family_history:  formData.familyHistory,  // 0 | 1 | 2 | unknown
+    genetic_risk:    formData.brcaStatus,     // yes | no | unknown
+    inflammation_hx: formData.inflammationHistory,
 
-    // clinical_inputs — Body
-    bmi: formData.bmi != null ? parseFloat(String(formData.bmi)).toFixed(1) : undefined,
+    // clinical_inputs — Body (separate height/weight fields)
+    height_ft:  heightFt,
+    height_in:  heightIn,
+    height_cm:  heightCm,
+    weight_lbs: weightLbs,
+    weight_kg:  weightKg,
 
     // clinical_inputs — Lifestyle
     exercise:         formData.exercise,
@@ -47,8 +63,8 @@ function buildClinicalRecord(formData, sessionRef) {
     comorbidities:    formData.comorbidityScore ?? 0,  // 0 | 1 | 2
 
     // symptom_scores
-    ipss_qol:             formData.ipssQol,   // 0–6  (IPSS Q8)
-    erection_confidence:  formData.shim?.[0], // 1–5  (SHIM Q1)
+    quality_of_life:     formData.ipssQol,   // 0–6  (IPSS Q8)
+    erection_confidence: formData.shim?.[0], // 1–5  (SHIM Q1)
   };
 
   // Drop undefined / null / empty
