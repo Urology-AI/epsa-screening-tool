@@ -314,11 +314,27 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
   );
 }
 
+const TEST_REDCAP_RECORD = {
+  age: '55',
+  race: 'white',
+  family_history: '1',
+  genetic_risk: 'no',
+  bmi: '26.5',
+  exercise: 'moderate',
+  smoking: 'never',
+  chemical_exposure: 'no',
+  diet_pattern: 'western',
+  comorbidities: 0,
+  ipss_qol: '2',
+  erection_confidence: '4',
+};
+
 export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
+  const [redcapTest, setRedcapTest] = useState(null); // null | 'testing' | 'ok' | 'err'
   const [confirmClear, setConfirmClear] = useState(false);
   const [syncing, setSyncing] = useState(null); // 'push' | 'pull' | null
   const [syncedKeys, setSyncedKeys] = useState(() => getSyncedKeys());
@@ -428,6 +444,21 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
     await refresh();
   }
 
+  async function handleTestRedcap() {
+    if (redcapTest === 'testing') return;
+    setRedcapTest('testing');
+    setImportMsg(null);
+    const result = await submitToRedcap(TEST_REDCAP_RECORD, `test_${Date.now()}`);
+    if (result.success) {
+      setRedcapTest('ok');
+      setImportMsg('REDCap test submission succeeded.');
+    } else {
+      setRedcapTest('err');
+      setImportMsg(`REDCap test failed: ${result.error}`);
+    }
+    setTimeout(() => setRedcapTest(null), 4000);
+  }
+
   async function handleImportBusflow() {
     if (!hasBusflow) return;
     setImportMsg(null);
@@ -506,6 +537,16 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
             </button>
           </>
         )}
+        <button
+          type="button"
+          className={`csm-toolbar-btn${redcapTest === 'ok' ? ' csm-toolbar-btn--ok' : redcapTest === 'err' ? ' csm-toolbar-btn--err' : ''}`}
+          onClick={handleTestRedcap}
+          disabled={redcapTest === 'testing'}
+          title="Send a dummy record to REDCap to verify the proxy is working"
+        >
+          <SendIcon size={15} />
+          {redcapTest === 'testing' ? 'Testing…' : redcapTest === 'ok' ? 'REDCap ✓' : redcapTest === 'err' ? 'REDCap ✗' : 'Test REDCap'}
+        </button>
         <button
           type="button"
           className={`csm-toolbar-btn csm-toolbar-btn--danger${confirmClear ? ' csm-toolbar-btn--confirm' : ''}`}
