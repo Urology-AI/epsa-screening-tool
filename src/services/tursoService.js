@@ -23,6 +23,8 @@ const COLS = [
   'tier_key', 'tier_label', 'display_range',
   // Part 2 inputs (step2)
   'psa', 'pirads', 'on_hormonal_therapy',
+  // REDCap export tracking
+  'redcap_pushed_at',
   // Complete session blob
   'full_record',
 ];
@@ -35,12 +37,15 @@ const CREATE_SQL = `CREATE TABLE IF NOT EXISTS clinical_sessions (
   comorbidity_score INTEGER, ipss_qol INTEGER, shim_q1 INTEGER,
   tier_key TEXT, tier_label TEXT, display_range TEXT,
   psa REAL, pirads TEXT, on_hormonal_therapy INTEGER,
+  redcap_pushed_at TEXT,
   full_record TEXT
 )`;
 
 // One migration statement per column added after initial release; each is
 // wrapped in allSettled so existing tables silently gain the column.
-const MIGRATE_COLS = [];
+const MIGRATE_COLS = [
+  ['redcap_pushed_at', 'TEXT'],
+];
 
 export function isTursoConfigured() {
   return !!(import.meta.env.VITE_TURSO_URL && import.meta.env.VITE_TURSO_AUTH_TOKEN);
@@ -209,6 +214,7 @@ function sessionColumns(session, cloudId) {
     psa: s2.psa != null ? Number(s2.psa) : null,
     pirads: s2.pirads != null ? String(s2.pirads) : null,
     on_hormonal_therapy: s2.onHormonalTherapy ? 1 : 0,
+    redcap_pushed_at: session.redcapPushedAt ?? null,
     full_record: JSON.stringify(deidentifySession(session, cloudId)),
   };
 }
@@ -304,6 +310,25 @@ export async function pullSessions() {
   if (idMapDirty) saveIdMap(idMap);
   markSynced(sessions);
   return sessions;
+}
+
+/**
+ * Record that a session was successfully pushed to REDCap.
+ * Updates the Turso row in place; the caller should also update local storage.
+ */
+export async function markRedcapPushed(session) {
+  const client = getClient();
+  await ensureSchema(client);
+  const idMap = loadIdMap();
+  if (!idMap[session.id]) idMap[session.id] = await sha256hex(syncKey(session));
+  saveIdMap(idMap);
+  const cloudId = idMap[session.id];
+  const now = new Date().toISOString();
+  await client.execute({
+    sql: 'UPDATE clinical_sessions SET redcap_pushed_at = ? WHERE id = ?',
+    args: [now, cloudId],
+  });
+  return now;
 }
 
 /**

@@ -67,28 +67,42 @@ export default {
     const params = new URLSearchParams({
       token,
       content: 'record',
+      action: 'import',
       format: 'json',
       type: 'flat',
       data: JSON.stringify([record]),
       returnContent: 'ids',
+      overwriteBehavior: 'normal',
     });
 
-    const redcapRes = await fetch(url, {
-      method: 'POST',
-      body: params,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-
-    if (!redcapRes.ok) {
-      const text = await redcapRes.text();
-      console.error('REDCap error:', redcapRes.status, text);
-      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}` }), {
+    let redcapRes;
+    try {
+      redcapRes = await fetch(url, {
+        method: 'POST',
+        body: params,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        redirect: 'error',  // fail fast if URL redirects (redirects silently downgrade POST→GET)
+      });
+    } catch (fetchErr) {
+      console.error('REDCap fetch failed (redirect or network):', fetchErr);
+      return new Response(JSON.stringify({ error: 'Could not reach REDCap — check REDCAP_API_URL (must be the final URL, no redirect, trailing slash required)' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    if (!redcapRes.ok) {
+      const text = await redcapRes.text();
+      console.error('REDCap error:', redcapRes.status, text);
+      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}: ${text.slice(0, 200)}` }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const redcapBody = await redcapRes.text();
+    console.log('REDCap import response:', redcapBody);
+    return new Response(JSON.stringify({ success: true, redcap: redcapBody }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
