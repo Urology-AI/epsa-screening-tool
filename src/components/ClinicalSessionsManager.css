@@ -540,6 +540,11 @@
   border-color: #fde68a;
   background: #fffbeb;
 }
+.csm-row-badge--redcap {
+  color: #065f46;
+  border-color: #6ee7b7;
+  background: #ecfdf5;
+}
 .csm-action-btn--consent { color: #b45309; border-color: #fde68a; background: #fffbeb; }
 .csm-action-btn--consent:hover { background: #fef3c7; }
 

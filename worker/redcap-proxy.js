@@ -67,17 +67,29 @@ export default {
     const params = new URLSearchParams({
       token,
       content: 'record',
+      action: 'import',
       format: 'json',
       type: 'flat',
       data: JSON.stringify([record]),
       returnContent: 'ids',
+      overwriteBehavior: 'normal',
     });
 
-    const redcapRes = await fetch(url, {
-      method: 'POST',
-      body: params,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
+    let redcapRes;
+    try {
+      redcapRes = await fetch(url, {
+        method: 'POST',
+        body: params,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        redirect: 'error',  // fail fast if URL redirects (redirects silently downgrade POST→GET)
+      });
+    } catch (fetchErr) {
+      console.error('REDCap fetch failed (redirect or network):', fetchErr);
+      return new Response(JSON.stringify({ error: 'Could not reach REDCap — check REDCAP_API_URL (must be the final URL, no redirect, trailing slash required)' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const redcapText = await redcapRes.text();
     console.log('REDCap HTTP status:', redcapRes.status);
@@ -85,7 +97,7 @@ export default {
 
     if (!redcapRes.ok) {
       console.error('REDCap HTTP error:', redcapRes.status, redcapText);
-      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}`, detail: redcapText }), {
+      return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}`, detail: redcapText.slice(0, 200) }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -103,7 +115,7 @@ export default {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, redcapResponse: redcapText }), {
+    return new Response(JSON.stringify({ success: true, redcap: redcapText }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

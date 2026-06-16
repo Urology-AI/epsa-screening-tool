@@ -45,6 +45,7 @@ export function normaliseSession(raw) {
     finalCategory: raw.finalCategory ?? null,
     rawAnswers: raw.rawAnswers ?? null,
     consented: raw.consented ?? null,
+    redcapPushedAt: raw.redcapPushedAt ?? null,
   };
 }
 
