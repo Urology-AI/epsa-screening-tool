@@ -1,105 +1,155 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useState } from 'react';
+import { MsalProvider, useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { PublicClientApplication, InteractionStatus } from '@azure/msal-browser';
 import ClinicalSessionsManager from './components/ClinicalSessionsManager.jsx';
 import './components/ClinicalSessionsManager.css';
 import { getOrCreateUid } from './services/clinicalSessionService';
-import { LockIcon } from 'lucide-react';
+import { msalConfig, loginRequest } from './config/msalConfig.js';
+import { LockIcon, LogOutIcon } from 'lucide-react';
 import './App.css';
 
-const ADMIN_PIN = import.meta.env.VITE_CLINICAL_ADMIN_PIN || '1234';
+const msalInstance = new PublicClientApplication(msalConfig);
 
-function PinGate({ onUnlock }) {
-  const { t } = useTranslation();
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
+// MSAL v2+ requires explicit initialization before use
+msalInstance.initialize().catch(console.error);
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      onUnlock();
-    } else {
-      setError('Incorrect PIN');
-      setPin('');
-    }
-  }
-
-  return (
-    <div style={{
-      minHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '1.5rem',
-      padding: '2rem',
-      background: 'var(--surface-bg, #0f172a)',
-      color: 'var(--ink-900, #fff)',
-    }}>
-      <LockIcon size={40} style={{ opacity: 0.6 }} />
-      <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Staff Admin</h1>
-      <p style={{ margin: 0, opacity: 0.6, fontSize: '0.9rem' }}>Enter your PIN to continue</p>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '260px' }}>
-        <input
-          type="password"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          maxLength={8}
-          value={pin}
-          onChange={e => { setPin(e.target.value); setError(''); }}
-          placeholder="PIN"
-          autoFocus
-          style={{
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            border: error ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.2)',
-            background: 'rgba(255,255,255,0.07)',
-            color: 'inherit',
-            fontSize: '1.1rem',
-            textAlign: 'center',
-            letterSpacing: '0.25em',
-          }}
-        />
-        {error && <p style={{ margin: 0, color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
-        <button
-          type="submit"
-          disabled={!pin}
-          style={{
-            padding: '0.75rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: '#3b82f6',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: '1rem',
-            cursor: pin ? 'pointer' : 'not-allowed',
-            opacity: pin ? 1 : 0.5,
-          }}
-        >
-          Unlock
-        </button>
-      </form>
-      <a href="/" style={{ fontSize: '0.82rem', opacity: 0.45, color: 'inherit', marginTop: '1rem' }}>
-        ← Back to kiosk
-      </a>
-    </div>
-  );
-}
-
-export default function AdminApp() {
-  const [unlocked, setUnlocked] = useState(false);
+function AdminContent() {
+  const { instance, accounts, inProgress } = useMsal();
+  const isAuthenticated = useIsAuthenticated();
   const [uid, setUid] = useState(null);
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
     getOrCreateUid().then(setUid).catch(() => {});
   }, []);
 
-  if (!unlocked) return <PinGate onUnlock={() => setUnlocked(true)} />;
+  // Handle redirect response on return from Microsoft login
+  useEffect(() => {
+    instance.handleRedirectPromise().catch(err => {
+      setLoginError(err.message || 'Login failed');
+    });
+  }, [instance]);
+
+  function handleLogin() {
+    setLoginError('');
+    instance.loginRedirect(loginRequest).catch(err => {
+      setLoginError(err.message || 'Login failed');
+    });
+  }
+
+  function handleLogout() {
+    instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + '/admin' });
+  }
+
+  const isLoading = inProgress === InteractionStatus.Redirect || inProgress === InteractionStatus.Login;
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '1.5rem',
+        padding: '2rem',
+        background: 'var(--surface)',
+        color: 'var(--ink-900)',
+      }}>
+        <LockIcon size={40} style={{ opacity: 0.6 }} />
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Staff Admin</h1>
+        <p style={{ margin: 0, color: 'var(--ink-600)', fontSize: '0.9rem', textAlign: 'center' }}>
+          Sign in with your Microsoft account to continue
+        </p>
+        {loginError && (
+          <p style={{ margin: 0, color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', maxWidth: '320px' }}>
+            {loginError}
+          </p>
+        )}
+        <button
+          onClick={handleLogin}
+          disabled={isLoading}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '8px',
+            border: 'none',
+            background: '#0078d4',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '1rem',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.6 : 1,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+            <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+            <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+            <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+          </svg>
+          {isLoading ? 'Signing in…' : 'Sign in with Microsoft'}
+        </button>
+        <a href="/" style={{ fontSize: '0.82rem', opacity: 0.45, color: 'inherit', marginTop: '0.5rem' }}>
+          ← Back to kiosk
+        </a>
+      </div>
+    );
+  }
+
+  const account = accounts[0];
 
   return (
-    <ClinicalSessionsManager
-      uid={uid}
-      onBack={() => { window.location.href = '/'; }}
-      onNewSession={() => { window.location.href = '/'; }}
-    />
+    <div style={{ position: 'relative' }}>
+      <div style={{
+        position: 'fixed',
+        top: '0.75rem',
+        right: '0.75rem',
+        zIndex: 999,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        background: 'var(--surface-subtle)',
+        borderRadius: '8px',
+        padding: '0.4rem 0.75rem',
+        fontSize: '0.82rem',
+        color: 'var(--ink-900)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid var(--ink-300)',
+      }}>
+        <span style={{ opacity: 0.7 }}>{account?.username || account?.name}</span>
+        <button
+          onClick={handleLogout}
+          title="Sign out"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'inherit',
+            cursor: 'pointer',
+            padding: '0.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            opacity: 0.7,
+          }}
+        >
+          <LogOutIcon size={14} />
+        </button>
+      </div>
+      <ClinicalSessionsManager
+        uid={uid}
+        onBack={() => { window.location.href = '/'; }}
+        onNewSession={() => { window.location.href = '/'; }}
+      />
+    </div>
+  );
+}
+
+export default function AdminApp() {
+  return (
+    <MsalProvider instance={msalInstance}>
+      <AdminContent />
+    </MsalProvider>
   );
 }

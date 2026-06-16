@@ -214,6 +214,8 @@ body {
 
 /* ─── Dark mode overrides ─── */
 .theme-dark {
+  color: var(--ink-900);
+
   /* Deep MS-navy dark surfaces */
   --surface: #0a0d2e;
   --surface-subtle: #11144a;

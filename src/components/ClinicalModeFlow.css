@@ -944,6 +944,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+  color: var(--ink-900);
 }
 .qef-consent-q-icon {
   width: 56px;
@@ -952,21 +953,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent-50, #eff6ff);
-  color: var(--accent-600, #2563eb);
+  background: var(--surface-subtle);
+  color: var(--brand-600);
 }
 .qef-consent-q-title {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
+  color: var(--ink-900);
 }
 .qef-consent-q-body {
   font-size: 1rem;
   margin: 0;
+  color: var(--ink-800);
 }
 .qef-consent-q-note {
   font-size: 0.85rem;
-  color: var(--ink-500, #6b7280);
+  color: var(--ink-600);
   margin: 0;
 }
 .qef-consent-q-actions {
@@ -979,15 +982,15 @@
 .qef-consent-q-local-btn {
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  border: 1px solid var(--ink-200, #e5e7eb);
+  border: 1px solid var(--ink-300);
   background: transparent;
-  color: var(--ink-600, #4b5563);
+  color: var(--ink-700);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
 }
 .qef-consent-q-local-btn:hover {
-  background: var(--ink-50, #f9fafb);
+  background: var(--surface-subtle);
 }
 
 /* ── Idle-reset countdown banner ── */
