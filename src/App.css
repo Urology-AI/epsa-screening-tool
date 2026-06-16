@@ -837,7 +837,7 @@ body {
   border-bottom-color: var(--line-100, #2d3748);
 }
 
-.theme-dark .pathway-dropdown-item__label { color: var(--ink-100, #e5e7eb); }
+.theme-dark .pathway-dropdown-item__label { color: var(--ink-800, #e5e7eb); }
 .theme-dark .pathway-dropdown-item__desc  { color: var(--ink-400, #9ca3af); }
 
 .theme-dark .pathway-opt--pre .pathway-dropdown-item__label    { color: #93c5fd; }

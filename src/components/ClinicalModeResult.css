@@ -473,10 +473,11 @@
   gap: 0.6rem;
   padding: 0.85rem 1rem;
   margin-bottom: 1rem;
-  border: 1px solid var(--ink-200, #e5e7eb);
-  border-left: 4px solid #6b7280;
+  border: 1px solid var(--ink-300);
+  border-left: 4px solid var(--ink-500);
   border-radius: 10px;
-  background: var(--ink-50, #f9fafb);
+  background: var(--surface-subtle);
+  color: var(--ink-800);
   font-size: 0.85rem;
 }
 .qer-consent-banner p { margin: 0; }

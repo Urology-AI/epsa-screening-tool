@@ -87,7 +87,7 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
           <p className="qer-guideline-body">
             Routine PSA screening above age 75 is not recommended by standard guidelines. Whether to continue screening depends on your overall health, life expectancy, and personal preferences. <strong>Please discuss with your physician.</strong>
           </p>
-          <p className="qer-guideline-body" style={{ marginTop: '0.5rem', fontSize: '12px', color: '#6b7280' }}>
+          <p className="qer-guideline-body" style={{ marginTop: '0.5rem', fontSize: '12px', color: 'var(--ink-600)' }}>
             AUA/SUO 2026 Statement 8 · NCCN Early Detection v2.2026 · EAU 2024
           </p>
         </div>
