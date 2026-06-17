@@ -3,3 +3,6 @@ dist/
 .env
 .env.local
 .wrangler/
+admin-dashboard/node_modules/
+admin-dashboard/dist/
+.DS_Store
