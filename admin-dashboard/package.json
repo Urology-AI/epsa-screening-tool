@@ -1,0 +1,26 @@
+{
+  "name": "epsa-admin-dashboard",
+  "version": "1.0.0",
+  "description": "ePSA Admin Dashboard - Standalone admin application",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^5.14.0",
+    "firebase": "^12.9.0",
+    "lucide-react": "^0.575.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.8"
+  }
+}
