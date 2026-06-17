@@ -8,8 +8,12 @@
  *   wrangler secret put REDCAP_TOKEN
  *   wrangler secret put REDCAP_API_URL   # e.g. https://redcap.mountsinai.org/api/
  *   wrangler secret put ALLOWED_ORIGIN   # e.g. https://urology-ai.github.io
+ *   wrangler secret put DASHBOARD_SECRET # arbitrary secret for dashboard read-back
  *
- * The worker accepts POST { record: {...} }, forwards to REDCap, returns { success }.
+ * Routes:
+ *   POST /          – import one record into REDCap (screening tool → REDCap)
+ *   GET  /records   – export all records from REDCap (dashboard read-back)
+ *                     Requires:  Authorization: Bearer <DASHBOARD_SECRET>
  */
 
 export default {
@@ -19,21 +23,84 @@ export default {
 
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowed || '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405, headers: corsHeaders });
-    }
-
     // Enforce origin allowlist in production
     if (allowed && origin && !origin.startsWith(allowed)) {
       return new Response('Forbidden', { status: 403, headers: corsHeaders });
+    }
+
+    const url = new URL(request.url);
+
+    // ── GET /records — dashboard read-back ───────────────────────────────────
+    if (request.method === 'GET' && url.pathname === '/records') {
+      const authHeader = request.headers.get('Authorization') || '';
+      const dashSecret = env.DASHBOARD_SECRET;
+      if (!dashSecret || authHeader !== `Bearer ${dashSecret}`) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const token = env.REDCAP_TOKEN;
+      const apiUrl = env.REDCAP_API_URL;
+      if (!token || !apiUrl) {
+        return new Response(JSON.stringify({ error: 'REDCap not configured on server' }), {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const params = new URLSearchParams({
+        token,
+        content: 'record',
+        action: 'export',
+        format: 'json',
+        type: 'flat',
+        rawOrLabel: 'label',
+        exportSurveyFields: 'false',
+        exportDataAccessGroups: 'false',
+      });
+
+      let redcapRes;
+      try {
+        redcapRes = await fetch(apiUrl, {
+          method: 'POST',
+          body: params,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          redirect: 'error',
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Could not reach REDCap', detail: err?.message }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const text = await redcapRes.text();
+      if (!redcapRes.ok) {
+        return new Response(JSON.stringify({ error: `REDCap returned HTTP ${redcapRes.status}`, detail: text.slice(0, 200) }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(text, {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── POST / — import one record ────────────────────────────────────────────
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405, headers: corsHeaders });
     }
 
     let body;
@@ -55,9 +122,9 @@ export default {
     }
 
     const token = env.REDCAP_TOKEN;
-    const url = env.REDCAP_API_URL;
+    const apiUrl = env.REDCAP_API_URL;
 
-    if (!token || !url) {
+    if (!token || !apiUrl) {
       return new Response(JSON.stringify({ error: 'REDCap not configured on server' }), {
         status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -77,11 +144,11 @@ export default {
 
     let redcapRes;
     try {
-      redcapRes = await fetch(url, {
+      redcapRes = await fetch(apiUrl, {
         method: 'POST',
         body: params,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        redirect: 'error',  // fail fast if URL redirects (redirects silently downgrade POST→GET)
+        redirect: 'error',
       });
     } catch (fetchErr) {
       console.error('REDCap fetch failed (redirect or network):', fetchErr);
@@ -103,7 +170,6 @@ export default {
       });
     }
 
-    // REDCap returns HTTP 200 even for errors — check the body for error strings
     if (redcapText.startsWith('{"error"') || redcapText.toLowerCase().includes('"error"')) {
       let parsed;
       try { parsed = JSON.parse(redcapText); } catch { /* not JSON */ }

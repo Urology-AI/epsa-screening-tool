@@ -16,7 +16,7 @@ import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, 
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
 import { getOrCreateUid, saveClinicalSession, generateSessionRef } from '../services/clinicalSessionService';
-import { isTursoConfigured, pushSessions } from '../services/tursoService';
+import { isTursoConfigured, pushSessions, markRedcapPushed } from '../services/tursoService';
 
 /* ─── BMI helpers ─── */
 function calcBmi(ft, inch, lbs) {
@@ -531,14 +531,8 @@ export default function ClinicalModeFlow() {
     const ref = generateSessionRef();
     setSessionRef(ref);
     setResult({ engineResult, formData });
-    if (consented == null) {
-      // Consent question normally comes before the questionnaire; this is a
-      // fallback for restored sessions that never answered it.
-      setScreen('storage_consent');
-    } else {
-      setScreen('result');
-      persistSession(consented, { formData, engineResult }, ref);
-    }
+    setScreen('result');
+    persistSession(consented, { formData, engineResult }, ref);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -567,7 +561,11 @@ export default function ClinicalModeFlow() {
         .then(() => setCloudStatus('saved'))
         .catch(() => setCloudStatus('error'));
     }
-    submitToRedcap(formData, ref).catch(() => {});
+    submitToRedcap(formData, ref).then((res) => {
+      if (res.success && isTursoConfigured()) {
+        markRedcapPushed({ id: ref, sessionRef: ref }).catch(() => {});
+      }
+    }).catch(() => {});
   }
 
   function handleStorageConsent(didConsent) {
@@ -621,7 +619,11 @@ export default function ClinicalModeFlow() {
 
   async function handleStudyConsentAgree() {
     if (result?.formData) {
-      submitToRedcap(result.formData, sessionRef); // fire-and-forget; don't block UX
+      submitToRedcap(result.formData, sessionRef).then((res) => {
+        if (res.success && isTursoConfigured() && sessionRef) {
+          markRedcapPushed({ id: sessionRef, sessionRef }).catch(() => {});
+        }
+      }).catch(() => {});
     }
     saveBusflowAndNavigate(true);
   }
@@ -644,8 +646,8 @@ export default function ClinicalModeFlow() {
           </div>
         )}
         <WelcomeScreen
-          onStart={() => { setScreen('form'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          onStaffAccess={() => { window.location.href = '/admin'; }}
+          onStart={() => { setScreen('storage_consent'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onStaffAccess={() => { window.location.href = import.meta.env.VITE_DASHBOARD_URL || '/'; }}
           onPrintForm={() => setShowPrintForm(true)}
           onPrintQr={() => setShowQrPoster(true)}
         />
@@ -653,7 +655,7 @@ export default function ClinicalModeFlow() {
     );
   }
 
-  if (screen === 'storage_consent' && result?.engineResult) {
+  if (screen === 'storage_consent') {
     return (
       <div className="qef-root">
         <StorageConsentQuestion

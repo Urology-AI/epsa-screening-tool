@@ -5,13 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run build:admin",
-    "build:admin": "cd admin-dashboard && npm install --prefer-offline && npm run build && node -e \"const{cpSync}=require('fs');cpSync('dist','../dist/admin',{recursive:true})\"",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@azure/msal-browser": "^5.13.0",
-    "@azure/msal-react": "^5.4.4",
     "@libsql/client": "^0.17.3",
     "html2canvas": "^1.4.1",
     "i18next": "^23.16.8",
