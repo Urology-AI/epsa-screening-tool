@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { useTranslation } from 'react-i18next';
+import { i18next as i18n } from '../i18n/i18n.js';
 import './ClinicalModeFlow.css';
 import InfoIcon from './InfoIcon.jsx';
 import LanguageSwitcher from './LanguageSwitcher.jsx';
@@ -66,9 +67,15 @@ const Chips = ({ options, value, onChange, ariaLabel }) => (
   </div>
 );
 
+/* ─── Kiosk mode: toggled by staff in the admin panel, stored in localStorage ─── */
+const KIOSK_KEY = 'epsa_kiosk_mode';
+function isKioskMode() {
+  try { return localStorage.getItem(KIOSK_KEY) === '1'; } catch { return false; }
+}
+
 /* ─── Question card ─── */
-const QCard = ({ num, label, info, sublabel, citation, answered, children }) => (
-  <div className={`qef-card${answered ? ' qef-card--answered' : ''}`}>
+const QCard = ({ num, label, info, sublabel, citation, answered, qid, children }) => (
+  <div className={`qef-card${answered ? ' qef-card--answered' : ''}`} data-qid={qid ?? ''}>
     <div className="qef-card-header">
       <span className={`qef-q-num${answered ? ' qef-q-num--done' : ''}`}>
         {answered ? <CheckIcon size={13} aria-hidden="true" /> : num}
@@ -156,15 +163,14 @@ function StorageConsentQuestion({ onYes, onNo }) {
   return (
     <div className="qef-consent-q">
       <div className="qef-consent-q-icon"><ShieldCheckIcon size={28} /></div>
-      <h2 className="qef-consent-q-title">One quick question before you begin</h2>
+      <h2 className="qef-consent-q-title">One quick question before we show your results</h2>
       <p className="qef-consent-q-body">
         Have you <strong>signed a consent form</strong> for the Mount Sinai
         screening study today?
       </p>
       <p className="qef-consent-q-note">
-        If yes, your anonymous responses are saved to the secure study
-        database. If no, your results are kept on this device only — you can
-        still see and print them.
+        If yes, your anonymous responses are saved to the secure study database.
+        If no, your results are shown and kept on this device only — no data leaves.
       </p>
       <div className="qef-consent-q-actions">
         <button type="button" className="qef-submit-btn qef-submit-btn--ready" onClick={onYes}>
@@ -251,6 +257,17 @@ function UnitCodeScreen({ unitCode, setUnitCode, onContinue }) {
 
 /* ─── Welcome screen ─── */
 function WelcomeScreen({ onStart, onStaffAccess, onPrintForm, onPrintQr }) {
+  const holdTimer = useRef(null);
+  const [holding, setHolding] = useState(false);
+
+  function startHold() {
+    setHolding(true);
+    holdTimer.current = setTimeout(() => { setHolding(false); onStaffAccess(); }, 1500);
+  }
+  function cancelHold() {
+    setHolding(false);
+    clearTimeout(holdTimer.current);
+  }
   return (
     <div className="qef-welcome">
 
@@ -358,8 +375,15 @@ function WelcomeScreen({ onStart, onStaffAccess, onPrintForm, onPrintQr }) {
           </button>
         </div>
 
-        <button type="button" className="qef-staff-link" onClick={onStaffAccess}>
-          Staff access
+        <button
+          type="button"
+          className={`qef-staff-link${holding ? ' qef-staff-link--holding' : ''}`}
+          onPointerDown={startHold}
+          onPointerUp={cancelHold}
+          onPointerLeave={cancelHold}
+          title="Hold for 1.5 seconds to access staff admin"
+        >
+          {holding ? 'Hold…' : 'Staff access'}
         </button>
       </div>
     </div>
@@ -407,7 +431,7 @@ export default function ClinicalModeFlow() {
   // returns to the results screen — or to the consent question if they
   // never answered it.
   const restored = useMemo(loadActiveSession, []);
-  const [screen, setScreen] = useState(restored ? (restored.consented == null ? 'storage_consent' : 'result') : 'unit_code');
+  const [screen, setScreen] = useState(restored ? (restored.consented == null ? 'storage_consent' : 'result') : 'welcome');
   const [answers, setAnswers] = useState(restored?.answers ?? {});
   const [metricH, setMetricH] = useState(false);
   const [metricW, setMetricW] = useState(false);
@@ -428,12 +452,15 @@ export default function ClinicalModeFlow() {
     getOrCreateUid().then(setUid).catch(() => {});
   }, []);
 
-  // Kiosk idle-reset: when the result screen is showing and there's no
-  // interaction for IDLE_WARN_S seconds, show a countdown banner, then reset.
-  const IDLE_WARN_S = 90;
+  // Kiosk idle-reset: on result/consent screens (all modes) and form screen
+  // (kiosk mode only). Longer timeout on the form so patients have time to think.
+  const IDLE_WARN_S = screen === 'form' ? 180 : 90;
   const IDLE_COUNTDOWN_S = 15;
+  const kiosk = isKioskMode();
   useEffect(() => {
-    if (screen !== 'result' && screen !== 'storage_consent' && screen !== 'study_consent') {
+    const activeScreens = ['result', 'storage_consent', 'study_consent'];
+    if (kiosk) activeScreens.push('form');
+    if (!activeScreens.includes(screen)) {
       setIdleSecondsLeft(null);
       return;
     }
@@ -470,7 +497,25 @@ export default function ClinicalModeFlow() {
     }
   }, [answers, result, sessionRef, consented, cloudStatus]);
 
+  const QUESTION_ORDER = ['age','race','familyHistory','qol','height','weight','exercise','smoking','diet','comorbidities','shim','brca'];
+
   const set = (key, val) => setAnswers((p) => ({ ...p, [key]: val }));
+
+  // After any answer is recorded, scroll to the next unanswered question.
+  const prevAnswered = useRef(0);
+  useEffect(() => {
+    if (screen !== 'form') return;
+    if (answered <= prevAnswered.current) { prevAnswered.current = answered; return; }
+    prevAnswered.current = answered;
+    const nextKey = QUESTION_ORDER.find(k => !isAnswered[k]);
+    if (!nextKey) return;
+    const el = document.querySelector(`[data-qid="${nextKey}"]`);
+    if (el) {
+      // Small delay so the answered-card animation fires first
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answered, screen]);
 
   const bmi = useMemo(() => deriveBmi(answers, metricH, metricW), [answers, metricH, metricW]);
 
@@ -536,8 +581,9 @@ export default function ClinicalModeFlow() {
     const ref = generateSessionRef();
     setSessionRef(ref);
     setResult({ engineResult, formData });
-    setScreen('result');
-    persistSession(consented, { formData, engineResult }, ref);
+    // Ask consent after results — patient has context for what they're agreeing to.
+    setScreen(consented !== null ? 'result' : 'storage_consent');
+    if (consented !== null) persistSession(consented, { formData, engineResult }, ref);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -576,14 +622,8 @@ export default function ClinicalModeFlow() {
 
   function handleStorageConsent(didConsent) {
     setConsented(didConsent);
-    if (result?.engineResult) {
-      // Asked post-submit (restored session fallback): save and show results.
-      setScreen('result');
-      persistSession(didConsent, result, sessionRef);
-    } else {
-      // Normal path: asked right after "Check My Risk", before the questions.
-      setScreen('form');
-    }
+    setScreen('result');
+    persistSession(didConsent, result, sessionRef);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -597,7 +637,8 @@ export default function ClinicalModeFlow() {
   function handleReset() {
     clearActiveSession();
     setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setSessionRef(null); setCloudStatus(null); setConsented(null); setUnitCode('');
-    setScreen('unit_code');
+    i18n.changeLanguage('en');
+    setScreen('welcome');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -642,10 +683,6 @@ export default function ClinicalModeFlow() {
     return <QrCodePoster onBack={() => setShowQrPoster(false)} />;
   }
 
-  if (screen === 'unit_code') {
-    return <UnitCodeScreen unitCode={unitCode} setUnitCode={setUnitCode} onContinue={() => { setScreen('welcome'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />;
-  }
-
   if (screen === 'welcome') {
     return (
       <>
@@ -656,7 +693,7 @@ export default function ClinicalModeFlow() {
           </div>
         )}
         <WelcomeScreen
-          onStart={() => { setScreen('storage_consent'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onStart={() => { setScreen('form'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           onStaffAccess={() => { window.location.href = '/admin'; }}
           onPrintForm={() => setShowPrintForm(true)}
           onPrintQr={() => setShowQrPoster(true)}
@@ -726,6 +763,12 @@ export default function ClinicalModeFlow() {
 
   return (
     <div className="qef-root">
+      {idleSecondsLeft !== null && (
+        <div className="qef-idle-banner" role="alert">
+          Session ending in {idleSecondsLeft}s&ensp;·&ensp;
+          <button onClick={handleReset}>Start over now</button>
+        </div>
+      )}
       {/* ── Sticky progress bar ── */}
       <div className="qef-progress-bar">
         <div className="qef-progress-top">
@@ -751,7 +794,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q1 — Age */}
         <QCard num={1} label={t('part1.fields.age.title')} info={fieldReferences.age}
-          sublabel={t('part1.fields.age.helper')} answered={isAnswered.age}>
+          sublabel={t('part1.fields.age.helper')} answered={isAnswered.age} qid="age">
           <input className={`qef-input${ageError ? ' qef-input--error' : ''}`}
             type="number" min={18} max={99}
             placeholder={t('part1.fields.age.placeholder')}
@@ -763,7 +806,7 @@ export default function ClinicalModeFlow() {
         </QCard>
 
         {/* Q2 — Race */}
-        <QCard num={2} label={t('part1.fields.race.title')} info={fieldReferences.race} answered={isAnswered.race}>
+        <QCard num={2} label={t('part1.fields.race.title')} info={fieldReferences.race} answered={isAnswered.race} qid="race">
           <Chips ariaLabel={t('part1.fields.race.title')} value={answers.race ?? ''} onChange={(v) => set('race', v)}
             options={[
               { value: 'african-american', label: t('part1.race.african-american') },
@@ -789,7 +832,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q3 — Family history */}
         <QCard num={3} label={t('part1.step1.familyHistory.title')} info={fieldReferences.familyHistory}
-          sublabel={t('part1.fields.familyHistory.helper')} answered={isAnswered.familyHistory}>
+          sublabel={t('part1.fields.familyHistory.helper')} answered={isAnswered.familyHistory} qid="familyHistory">
           <Chips ariaLabel={t('part1.step1.familyHistory.title')} value={answers.familyHistory ?? ''} onChange={(v) => set('familyHistory', v)}
             options={[
               { value: 'none',     label: t('quickEntry.family.none') },
@@ -802,7 +845,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q4 — Urinary QoL */}
         <QCard num={4} label={t('part1.steps.ipss.sectionTitle')} info={fieldReferences.ipss}
-          sublabel={t('quickEntry.ipssQolLabel')} answered={isAnswered.qol}
+          sublabel={t('quickEntry.ipssQolLabel')} answered={isAnswered.qol} qid="qol"
           citation="International Prostate Symptom Score (IPSS) — AUA/WHO validated. Score ≥ 3 warrants clinical evaluation.">
           <Chips ariaLabel={t('part1.steps.ipss.sectionTitle')} value={answers.qol ?? ''} onChange={(v) => set('qol', v)}
             options={[
@@ -818,7 +861,7 @@ export default function ClinicalModeFlow() {
         </QCard>
 
         {/* Q5 — Height */}
-        <QCard num={5} label={t('part1.step2.heightQuestion')} info={fieldReferences.heightWeight} answered={isAnswered.height}>
+        <QCard num={5} label={t('part1.step2.heightQuestion')} info={fieldReferences.heightWeight} answered={isAnswered.height} qid="height">
           <div className="qef-unit-row">
             <button type="button" className="qef-unit-toggle" onClick={() => setMetricH((v) => !v)}>
               {metricH ? t('part1.step2.heightUnit.metric') : t('part1.step2.heightUnit.imperial')}
@@ -842,7 +885,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q6 — Weight + live BMI */}
         <QCard num={6} label={t('part1.step2.weightQuestion')} info={fieldReferences.heightWeight}
-          sublabel={t('part1.step2.weightHelper')} answered={isAnswered.weight}>
+          sublabel={t('part1.step2.weightHelper')} answered={isAnswered.weight} qid="weight">
           <div className="qef-unit-row">
             <button type="button" className="qef-unit-toggle" onClick={() => setMetricW((v) => !v)}>
               {metricW ? t('part1.step2.weightUnit.kg') : t('part1.step2.weightUnit.lbs')}
@@ -862,7 +905,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q7 — Exercise */}
         <QCard num={7} label={t('part1.fields.exercise.title')} info={fieldReferences.exercise}
-          sublabel={t('part1.fields.exercise.helper')} answered={isAnswered.exercise}>
+          sublabel={t('part1.fields.exercise.helper')} answered={isAnswered.exercise} qid="exercise">
           <Chips ariaLabel={t('part1.fields.exercise.title')} value={answers.exercise ?? ''} onChange={(v) => set('exercise', v)}
             options={[
               { value: 0, label: t('part1.step3.exercise.regular') },
@@ -874,7 +917,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q8 — Smoking */}
         <QCard num={8} label={t('part1.fields.smoking.title')} info={fieldReferences.smoking}
-          sublabel={t('part1.fields.smoking.helper')} answered={isAnswered.smoking}>
+          sublabel={t('part1.fields.smoking.helper')} answered={isAnswered.smoking} qid="smoking">
           <Chips ariaLabel={t('part1.fields.smoking.title')} value={answers.smoking ?? ''} onChange={(v) => set('smoking', v)}
             options={[
               { value: 0, label: t('part1.step3.smoking.never') },
@@ -886,7 +929,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q9 — Diet */}
         <QCard num={9} label={t('part1.fields.diet.title')} info={fieldReferences.diet}
-          sublabel={t('part1.fields.diet.helper')} answered={isAnswered.diet}>
+          sublabel={t('part1.fields.diet.helper')} answered={isAnswered.diet} qid="diet">
           <Chips ariaLabel={t('part1.fields.diet.title')} value={answers.diet ?? ''} onChange={(v) => set('diet', v)}
             options={[
               { value: 'western',       label: t('part1.step4.diet.western') },
@@ -904,7 +947,7 @@ export default function ClinicalModeFlow() {
         {/* Q10 — Comorbidities */}
         <QCard num={10} label="Major comorbidities" info={fieldReferences.comorbidities}
           sublabel="Hypertension, high cholesterol (hyperlipidemia), coronary artery disease, or diabetes"
-          answered={isAnswered.comorbidities}>
+          answered={isAnswered.comorbidities} qid="comorbidities">
           <Chips ariaLabel="Comorbidities" value={answers.comorbidities ?? ''} onChange={(v) => set('comorbidities', v)}
             options={[
               { value: 0, label: 'None' },
@@ -916,7 +959,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q11 — SHIM */}
         <QCard num={11} label={t('part1.fields.shim.title')} info={fieldReferences.shim}
-          sublabel={t('part1.shimShort.singleQuestionLabel')} answered={isAnswered.shim}
+          sublabel={t('part1.shimShort.singleQuestionLabel')} answered={isAnswered.shim} qid="shim"
           citation="Sexual Health Inventory for Men (SHIM / IIEF-5). Your answer is private and confidential.">
           <Chips ariaLabel={t('part1.fields.shim.title')} value={answers.shim ?? ''} onChange={(v) => set('shim', v)}
             options={[
@@ -931,7 +974,7 @@ export default function ClinicalModeFlow() {
 
         {/* Q12 — BRCA / Genetic testing */}
         <QCard num={12} label={t('part1.fields.brcaStatus.title')} info={fieldReferences.brcaStatus}
-          sublabel={t('part1.fields.brcaStatus.helper')} answered={isAnswered.brca}>
+          sublabel={t('part1.fields.brcaStatus.helper')} answered={isAnswered.brca} qid="brca">
           <Chips ariaLabel={t('part1.fields.brcaStatus.title')} value={answers.brca ?? ''} onChange={(v) => set('brca', v)}
             options={[
               { value: 'no',      label: t('part1.options.no') },

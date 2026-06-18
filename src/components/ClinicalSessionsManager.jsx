@@ -353,11 +353,23 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
   const [redcapTest, setRedcapTest] = useState(null); // null | 'testing' | 'ok' | 'err'
-  const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false); // false | 'confirm' | 'exporting'
+  const [filterTier, setFilterTier] = useState('all'); // 'all' | 'low' | 'intermediate' | 'elevated'
+  const [filterStep2, setFilterStep2] = useState('all'); // 'all' | 'needs' | 'done'
   const [syncing, setSyncing] = useState(null); // 'push' | 'pull' | null
   const [syncedKeys, setSyncedKeys] = useState(() => getSyncedKeys());
   const [pendingDeletes, setPendingDeletes] = useState(() => getPendingDeleteCount());
   const tursoReady = isTursoConfigured();
+  const KIOSK_KEY = 'epsa_kiosk_mode';
+  const [kioskMode, setKioskMode] = useState(() => {
+    try { return localStorage.getItem(KIOSK_KEY) === '1'; } catch { return false; }
+  });
+
+  function toggleKiosk() {
+    const next = !kioskMode;
+    try { next ? localStorage.setItem(KIOSK_KEY, '1') : localStorage.removeItem(KIOSK_KEY); } catch {}
+    setKioskMode(next);
+  }
 
   // Check if there's a live ePSA session in sessionStorage to import
   const busflow = (() => {
@@ -399,13 +411,34 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
     exportSessionsAsJson(sessions);
   }
 
-  async function handleClearAll() {
-    if (!confirmClear) { setConfirmClear(true); return; }
+  async function handleClearAll(exportFirst = false) {
+    if (!confirmClear) { setConfirmClear('confirm'); return; }
+    if (confirmClear === 'confirm' && !exportFirst) {
+      // Show export option
+      setConfirmClear('exporting');
+      return;
+    }
+    if (exportFirst && sessions.length) exportSessionsAsJson(sessions);
     setConfirmClear(false);
     await clearAllClinicalSessions(uid);
     setImportMsg('All locally stored sessions cleared.');
     await refresh();
   }
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const stats = {
+    total: sessions.length,
+    today: sessions.filter(s => s.createdAt && new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) === today).length,
+    needsStep2: sessions.filter(s => !(s.step2 || s.postResult)).length,
+    pendingRedcap: sessions.filter(s => !s.redcapPushedAt && s.consented !== false).length,
+  };
+
+  const filteredSessions = sessions.filter(s => {
+    if (filterTier !== 'all' && (s.engineResult?.epsaTierKey || 'unknown') !== filterTier) return false;
+    if (filterStep2 === 'needs' && (s.step2 || s.postResult)) return false;
+    if (filterStep2 === 'done' && !(s.step2 || s.postResult)) return false;
+    return true;
+  });
 
   async function handlePushCloud() {
     if ((!sessions.length && !pendingDeletes) || syncing) return;
@@ -500,11 +533,49 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
         </button>
         <h2 className="csm-title">Saved Sessions</h2>
         <div className="csm-header-actions">
+          <button
+            type="button"
+            className={`csm-kiosk-toggle${kioskMode ? ' csm-kiosk-toggle--on' : ''}`}
+            onClick={toggleKiosk}
+            title={kioskMode ? 'Kiosk mode ON — tap to disable (idle reset active on form)' : 'Kiosk mode OFF — tap to enable (adds idle reset to form screen)'}
+          >
+            {kioskMode ? '🖥 Kiosk ON' : '🖥 Kiosk OFF'}
+          </button>
           <button type="button" className="csm-icon-btn" onClick={refresh} title="Refresh">
             <RefreshCwIcon size={16} />
           </button>
         </div>
       </div>
+
+      {!loading && sessions.length > 0 && (
+        <div className="csm-stats-strip">
+          <div className="csm-stat"><span className="csm-stat-num">{stats.today}</span><span className="csm-stat-label">Today</span></div>
+          <div className="csm-stat"><span className="csm-stat-num">{stats.total}</span><span className="csm-stat-label">Total</span></div>
+          <div className="csm-stat csm-stat--warn"><span className="csm-stat-num">{stats.needsStep2}</span><span className="csm-stat-label">Needs Step 2</span></div>
+          <div className="csm-stat csm-stat--warn"><span className="csm-stat-num">{stats.pendingRedcap}</span><span className="csm-stat-label">Pending REDCap</span></div>
+        </div>
+      )}
+
+      {!loading && sessions.length > 0 && (
+        <div className="csm-filters">
+          <select className="csm-filter-select" value={filterTier} onChange={e => setFilterTier(e.target.value)}>
+            <option value="all">All tiers</option>
+            <option value="low">Low risk</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="elevated">Elevated</option>
+          </select>
+          <select className="csm-filter-select" value={filterStep2} onChange={e => setFilterStep2(e.target.value)}>
+            <option value="all">All sessions</option>
+            <option value="needs">Needs Step 2</option>
+            <option value="done">Has Step 2</option>
+          </select>
+          {(filterTier !== 'all' || filterStep2 !== 'all') && (
+            <button type="button" className="csm-filter-clear" onClick={() => { setFilterTier('all'); setFilterStep2('all'); }}>
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
 
       {hasBusflow && (
         <div className="csm-busflow-banner">
@@ -565,16 +636,29 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
           <SendIcon size={15} />
           {redcapTest === 'testing' ? 'Testing…' : redcapTest === 'ok' ? 'REDCap ✓' : redcapTest === 'err' ? 'REDCap ✗' : 'Test REDCap'}
         </button>
-        <button
-          type="button"
-          className={`csm-toolbar-btn csm-toolbar-btn--danger${confirmClear ? ' csm-toolbar-btn--confirm' : ''}`}
-          onClick={handleClearAll}
-          onBlur={() => setConfirmClear(false)}
-          disabled={!sessions.length}
-          title="Delete all saved sessions from this device"
-        >
-          <TrashIcon size={15} /> {confirmClear ? 'Confirm clear all?' : 'Clear All'}
-        </button>
+        {confirmClear === 'exporting' ? (
+          <div className="csm-clear-confirm">
+            <span>Export before clearing?</span>
+            <button type="button" className="csm-toolbar-btn csm-toolbar-btn--primary" onClick={() => handleClearAll(true)}>
+              Export &amp; Clear
+            </button>
+            <button type="button" className="csm-toolbar-btn csm-toolbar-btn--danger" onClick={() => handleClearAll(false)}>
+              Clear Only
+            </button>
+            <button type="button" className="csm-toolbar-btn" onClick={() => setConfirmClear(false)}>Cancel</button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={`csm-toolbar-btn csm-toolbar-btn--danger${confirmClear === 'confirm' ? ' csm-toolbar-btn--confirm' : ''}`}
+            onClick={() => handleClearAll()}
+            onBlur={() => setConfirmClear(false)}
+            disabled={!sessions.length}
+            title="Delete all saved sessions from this device"
+          >
+            <TrashIcon size={15} /> {confirmClear === 'confirm' ? 'Sure? Tap again' : 'Clear All'}
+          </button>
+        )}
       </div>
 
       {importMsg && (
@@ -586,24 +670,36 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
       <div className="csm-list">
         {loading ? (
           <div className="csm-empty">Loading sessions…</div>
-        ) : sessions.length === 0 ? (
+        ) : filteredSessions.length === 0 ? (
           <div className="csm-empty">
-            No saved sessions yet. Complete a screening to save results here.
+            {sessions.length === 0 ? 'No saved sessions yet. Complete a screening to save results here.' : 'No sessions match the current filters.'}
           </div>
-        ) : (
-          sessions.map(s => (
-            <SessionRow
-              key={s.id}
-              session={s}
-              uid={uid}
-              onDeleted={handleSessionDeleted}
-              onConsented={handleSessionConsented}
-              onUpdated={refresh}
-              tursoReady={tursoReady}
-              tursoSynced={syncedKeys.has(syncKey(s))}
-            />
-          ))
-        )}
+        ) : (() => {
+          const groups = {};
+          for (const s of filteredSessions) {
+            const label = s.createdAt
+              ? new Date(s.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+              : 'Unknown date';
+            (groups[label] = groups[label] ?? []).push(s);
+          }
+          return Object.entries(groups).map(([dateLabel, group]) => (
+            <div key={dateLabel} className="csm-date-group">
+              <div className="csm-date-heading">{dateLabel} <span className="csm-date-count">({group.length})</span></div>
+              {group.map(s => (
+                <SessionRow
+                  key={s.id}
+                  session={s}
+                  uid={uid}
+                  onDeleted={handleSessionDeleted}
+                  onConsented={handleSessionConsented}
+                  onUpdated={refresh}
+                  tursoReady={tursoReady}
+                  tursoSynced={syncedKeys.has(syncKey(s))}
+                />
+              ))}
+            </div>
+          ));
+        })()}
       </div>
 
       <div className="csm-storage-note">
