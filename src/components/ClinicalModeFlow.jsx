@@ -1,7 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useMsal, useIsAuthenticated } from '@azure/msal-react';
-import { InteractionStatus } from '@azure/msal-browser';
-import { loginRequest } from '../config/msal.js';
 import QRCode from 'qrcode';
 import { useTranslation } from 'react-i18next';
 import './ClinicalModeFlow.css';
@@ -15,10 +12,7 @@ import { DEFAULT_CALCULATOR_CONFIG } from '../config/calculatorConfig';
 import { FH_MAP, DIET_MAP, deriveIpssFromQol, expandShimSingle } from '../utils/epsaFormUtils';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
-import StaffDataEntry from './StaffDataEntry.jsx';
-import ClinicalSessionsManager from './ClinicalSessionsManager.jsx';
-import './ClinicalSessionsManager.css';
-import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, ArrowLeftIcon, ShieldCheckIcon, LockIcon, FileTextIcon, PrinterIcon } from 'lucide-react';
+import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, ArrowLeftIcon, ShieldCheckIcon, FileTextIcon, PrinterIcon } from 'lucide-react';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
 import { getOrCreateUid, saveClinicalSession, generateSessionRef } from '../services/clinicalSessionService';
@@ -179,60 +173,6 @@ function StorageConsentQuestion({ onYes, onNo }) {
         <button type="button" className="qef-consent-q-local-btn" onClick={onNo}>
           No — use my results locally only
         </button>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Staff auth modal — Microsoft login only ─── */
-const AZURE_CLIENT_ID_CONFIGURED = !!(import.meta.env.VITE_AZURE_CLIENT_ID);
-
-function StaffAuthModal({ onSuccess, onClose }) {
-  const { instance, inProgress } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
-  const [msalError, setMsalError] = useState('');
-
-  // If MSAL login completes (redirect back), auto-authenticate
-  useEffect(() => {
-    if (isAuthenticated) onSuccess();
-  }, [isAuthenticated, onSuccess]);
-
-  function handleMsalLogin() {
-    setMsalError('');
-    instance.loginRedirect(loginRequest).catch(err => {
-      setMsalError(err.message || 'Microsoft login failed. Please try again.');
-    });
-  }
-
-  const msalLoading = inProgress === InteractionStatus.Redirect || inProgress === InteractionStatus.Login;
-
-  return (
-    <div className="csm-pin-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="csm-pin-modal" role="dialog" aria-modal="true" aria-label="Staff access">
-        <div className="csm-pin-icon"><LockIcon size={22} /></div>
-        <h2 className="csm-pin-title">Staff Access</h2>
-
-        {AZURE_CLIENT_ID_CONFIGURED ? (
-          <>
-            <p className="csm-pin-sub">Sign in with your Mount Sinai Microsoft account.</p>
-            {msalError && <p className="csm-pin-error">{msalError}</p>}
-            <button
-              type="button"
-              className="csm-pin-submit"
-              onClick={handleMsalLogin}
-              disabled={msalLoading}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-            >
-              {msalLoading ? 'Redirecting…' : '🏢 Sign in with Microsoft'}
-            </button>
-          </>
-        ) : (
-          <p className="csm-pin-error" style={{ textAlign: 'center', padding: '0.75rem 0' }}>
-            Microsoft login not configured — set <code>VITE_AZURE_CLIENT_ID</code> in <code>.env.local</code>
-          </p>
-        )}
-
-        <button type="button" className="csm-pin-cancel" onClick={onClose} style={{ marginTop: '0.5rem' }}>Cancel</button>
       </div>
     </div>
   );
@@ -482,9 +422,6 @@ export default function ClinicalModeFlow() {
   const [consented, setConsented] = useState(restored?.consented ?? null); // null until the consent question is answered
   const [showPrintForm, setShowPrintForm] = useState(false);
   const [showQrPoster, setShowQrPoster] = useState(false);
-  const [showStaffPin, setShowStaffPin] = useState(false);
-  const [staffAuthed, setStaffAuthed] = useState(false);
-  const [staffSubview, setStaffSubview] = useState('menu'); // 'menu' | 'dataentry' | 'sessions'
   const [unitCode, setUnitCode] = useState('');
 
   useEffect(() => {
@@ -697,56 +634,6 @@ export default function ClinicalModeFlow() {
     saveBusflowAndNavigate(true);
   }
 
-  if (staffAuthed) {
-    return (
-      <div className="qef-root">
-        <div style={{ padding: '1rem 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle, #e5e7eb)', paddingBottom: '0.75rem' }}>
-          <button
-            type="button"
-            className="qef-back-btn"
-            onClick={() => {
-              if (staffSubview !== 'menu') { setStaffSubview('menu'); }
-              else { setStaffAuthed(false); setStaffSubview('menu'); }
-            }}
-          >
-            <ArrowLeftIcon size={16} aria-hidden="true" /> Back
-          </button>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ms-navy, #212070)' }}>
-            Staff — {staffSubview === 'dataentry' ? 'Quick Data Entry' : staffSubview === 'sessions' ? 'Session Manager' : 'Menu'}
-          </span>
-        </div>
-
-        {staffSubview === 'menu' && (
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <button
-              type="button"
-              className="qef-submit-btn qef-submit-btn--ready"
-              onClick={() => setStaffSubview('dataentry')}
-            >
-              Quick Data Entry
-            </button>
-            <button
-              type="button"
-              className="qef-submit-btn qef-submit-btn--ready"
-              onClick={() => setStaffSubview('sessions')}
-            >
-              Session Manager
-            </button>
-          </div>
-        )}
-
-        {staffSubview === 'dataentry' && <StaffDataEntry />}
-        {staffSubview === 'sessions' && (
-          <ClinicalSessionsManager
-            uid={uid}
-            onBack={() => setStaffSubview('menu')}
-            onNewSession={() => { setStaffAuthed(false); setStaffSubview('menu'); setScreen('unit_code'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          />
-        )}
-      </div>
-    );
-  }
-
   if (showPrintForm) {
     return <ClinicalModePrintForm onBack={() => setShowPrintForm(false)} answers={{}} />;
   }
@@ -770,16 +657,10 @@ export default function ClinicalModeFlow() {
         )}
         <WelcomeScreen
           onStart={() => { setScreen('storage_consent'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          onStaffAccess={() => setShowStaffPin(true)}
+          onStaffAccess={() => { window.location.href = '/admin'; }}
           onPrintForm={() => setShowPrintForm(true)}
           onPrintQr={() => setShowQrPoster(true)}
         />
-        {showStaffPin && (
-          <StaffAuthModal
-            onSuccess={() => { setShowStaffPin(false); setStaffAuthed(true); setStaffSubview('menu'); }}
-            onClose={() => setShowStaffPin(false)}
-          />
-        )}
       </>
     );
   }
