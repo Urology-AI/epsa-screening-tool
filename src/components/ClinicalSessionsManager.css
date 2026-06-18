@@ -585,3 +585,105 @@
 .theme-dark .csm-part2-title { color: #c4b5fd; }
 
 .theme-dark .csm-pin-overlay { background: rgba(0,0,0,0.7); }
+
+/* Date grouping */
+.csm-date-group { margin-bottom: 1rem; }
+.csm-date-heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-500, #6b7280);
+  padding: 0.5rem 0.25rem 0.35rem;
+  border-bottom: 1px solid var(--line-100, #e5e7eb);
+  margin-bottom: 0.4rem;
+}
+.csm-date-count { font-weight: 400; color: var(--ink-400, #9ca3af); }
+.qef-staff-link--holding { opacity: 1; color: var(--brand-600, #0369a1); }
+
+/* Stats strip */
+.csm-stats-strip {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line-100, #e5e7eb);
+  background: var(--surface-subtle, #f9fafb);
+  padding: 0.5rem 1rem;
+}
+.csm-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.25rem 0;
+}
+.csm-stat + .csm-stat { border-left: 1px solid var(--line-100, #e5e7eb); }
+.csm-stat-num {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink-900, #111827);
+}
+.csm-stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-500, #6b7280);
+}
+.csm-stat--warn .csm-stat-num { color: #d97706; }
+
+/* Filters */
+.csm-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--line-100, #e5e7eb);
+  flex-wrap: wrap;
+}
+.csm-filter-select {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--line-200, #d1d5db);
+  background: var(--surface, #fff);
+  color: var(--ink-900, #111827);
+  cursor: pointer;
+}
+.csm-filter-clear {
+  font-size: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--brand-600, #0369a1);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  text-decoration: underline;
+}
+
+/* Clear-all inline confirm */
+.csm-clear-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--ink-700, #374151);
+}
+
+/* Kiosk mode toggle */
+.csm-kiosk-toggle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--line-200, #d1d5db);
+  background: var(--surface, #fff);
+  color: var(--ink-500, #6b7280);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.csm-kiosk-toggle--on {
+  background: #0369a1;
+  border-color: #0369a1;
+  color: #fff;
+}
