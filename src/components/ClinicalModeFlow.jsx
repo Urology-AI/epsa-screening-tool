@@ -1,4 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { InteractionStatus } from '@azure/msal-browser';
+import { loginRequest } from '../config/msal.js';
 import QRCode from 'qrcode';
 import { useTranslation } from 'react-i18next';
 import './ClinicalModeFlow.css';
@@ -12,6 +15,9 @@ import { DEFAULT_CALCULATOR_CONFIG } from '../config/calculatorConfig';
 import { FH_MAP, DIET_MAP, deriveIpssFromQol, expandShimSingle } from '../utils/epsaFormUtils';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
+import StaffDataEntry from './StaffDataEntry.jsx';
+import ClinicalSessionsManager from './ClinicalSessionsManager.jsx';
+import './ClinicalSessionsManager.css';
 import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, ArrowLeftIcon, ShieldCheckIcon, LockIcon, FileTextIcon, PrinterIcon } from 'lucide-react';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
@@ -178,48 +184,55 @@ function StorageConsentQuestion({ onYes, onNo }) {
   );
 }
 
-/* ─── Staff PIN modal ─── */
-const ADMIN_PIN = import.meta.env.VITE_CLINICAL_ADMIN_PIN || '1234';
+/* ─── Staff auth modal — Microsoft login only ─── */
+const AZURE_CLIENT_ID_CONFIGURED = !!(import.meta.env.VITE_AZURE_CLIENT_ID);
 
-function StaffPinModal({ onSuccess, onClose }) {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
-  const inputRef = useRef(null);
+function StaffAuthModal({ onSuccess, onClose }) {
+  const { instance, inProgress } = useMsal();
+  const isAuthenticated = useIsAuthenticated();
+  const [msalError, setMsalError] = useState('');
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  // If MSAL login completes (redirect back), auto-authenticate
+  useEffect(() => {
+    if (isAuthenticated) onSuccess();
+  }, [isAuthenticated, onSuccess]);
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      onSuccess();
-    } else {
-      setError('Incorrect PIN. Please try again.');
-      setPin('');
-      inputRef.current?.focus();
-    }
+  function handleMsalLogin() {
+    setMsalError('');
+    instance.loginRedirect(loginRequest).catch(err => {
+      setMsalError(err.message || 'Microsoft login failed. Please try again.');
+    });
   }
+
+  const msalLoading = inProgress === InteractionStatus.Redirect || inProgress === InteractionStatus.Login;
 
   return (
     <div className="csm-pin-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="csm-pin-modal" role="dialog" aria-modal="true" aria-label="Staff access">
         <div className="csm-pin-icon"><LockIcon size={22} /></div>
         <h2 className="csm-pin-title">Staff Access</h2>
-        <p className="csm-pin-sub">Enter your PIN to manage saved sessions.</p>
-        <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <input
-            ref={inputRef}
-            type="password"
-            className={`csm-pin-input${error ? ' csm-pin-input--error' : ''}`}
-            value={pin}
-            onChange={e => { setPin(e.target.value); setError(''); }}
-            placeholder="••••"
-            maxLength={20}
-            autoComplete="current-password"
-          />
-          {error && <p className="csm-pin-error">{error}</p>}
-          <button type="submit" className="csm-pin-submit" disabled={!pin}>Unlock</button>
-        </form>
-        <button type="button" className="csm-pin-cancel" onClick={onClose}>Cancel</button>
+
+        {AZURE_CLIENT_ID_CONFIGURED ? (
+          <>
+            <p className="csm-pin-sub">Sign in with your Mount Sinai Microsoft account.</p>
+            {msalError && <p className="csm-pin-error">{msalError}</p>}
+            <button
+              type="button"
+              className="csm-pin-submit"
+              onClick={handleMsalLogin}
+              disabled={msalLoading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              {msalLoading ? 'Redirecting…' : '🏢 Sign in with Microsoft'}
+            </button>
+          </>
+        ) : (
+          <p className="csm-pin-error" style={{ textAlign: 'center', padding: '0.75rem 0' }}>
+            Microsoft login not configured — set <code>VITE_AZURE_CLIENT_ID</code> in <code>.env.local</code>
+          </p>
+        )}
+
+        <button type="button" className="csm-pin-cancel" onClick={onClose} style={{ marginTop: '0.5rem' }}>Cancel</button>
       </div>
     </div>
   );
@@ -242,6 +255,56 @@ function AppQRCode() {
     <div className="qef-qr-block">
       <canvas ref={canvasRef} />
       <p className="qef-qr-label">Scan to open on your phone</p>
+    </div>
+  );
+}
+
+/* ─── Unit code screen (personal device mode — shown before welcome) ─── */
+function UnitCodeScreen({ unitCode, setUnitCode, onContinue }) {
+  const [tipOpen, setTipOpen] = useState(false);
+  return (
+    <div className="qef-root" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '2rem 1.5rem', gap: '1.5rem' }}>
+      <img src="/sinai_dark.png" alt="Mount Sinai" className="qef-logo" onError={(e) => { e.target.style.display = 'none'; }} style={{ marginBottom: '0.5rem' }} />
+      <h1 style={{ fontSize: '1.4rem', fontWeight: 700, textAlign: 'center', color: 'var(--ms-navy, #212070)', margin: 0 }}>
+        ePSA — Electronic Prostate Specific Awareness
+      </h1>
+      <p style={{ textAlign: 'center', color: 'var(--ink-600, #4b5563)', margin: 0 }}>
+        Enter the unit code displayed on the screening bus
+      </p>
+      <input
+        type="text"
+        className="qef-input"
+        placeholder="e.g. BUS-001"
+        value={unitCode}
+        maxLength={20}
+        style={{ textTransform: 'uppercase', textAlign: 'center', fontSize: '1.25rem', letterSpacing: '0.1em', maxWidth: '280px', width: '100%' }}
+        onChange={e => setUnitCode(e.target.value.toUpperCase())}
+        onKeyDown={e => { if (e.key === 'Enter' && unitCode.trim()) onContinue(); }}
+        autoFocus
+      />
+      <button
+        type="button"
+        className={`qef-submit-btn${unitCode.trim() ? ' qef-submit-btn--ready' : ''}`}
+        disabled={!unitCode.trim()}
+        onClick={onContinue}
+        style={{ maxWidth: '280px', width: '100%' }}
+      >
+        Continue
+      </button>
+      <div style={{ maxWidth: '320px', width: '100%' }}>
+        <button
+          type="button"
+          onClick={() => setTipOpen(v => !v)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-500, #6b7280)', fontSize: '0.85rem', padding: 0, textDecoration: 'underline dotted' }}
+        >
+          {tipOpen ? '▾' : '▸'} What is this?
+        </button>
+        {tipOpen && (
+          <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: 'var(--ink-600, #4b5563)', lineHeight: 1.5 }}>
+            Ask a staff member for the unit code posted on the bus or tent. This links your results to the correct screening unit.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -369,9 +432,10 @@ const TOTAL = 12;
    The patient's own results live on their phone: the last completed session
    is kept in localStorage so closing the tab or reloading brings the results
    screen (and the consent-later option) back, until they tap "Start over".
-   Expires after 24h so a shared/kiosk device doesn't show stale results. */
+   TTL is 4h — short enough that a shared/kiosk device doesn't expose one
+   patient's de-identified answers to the next user of the device. */
 const ACTIVE_SESSION_KEY = 'epsa_clinical_active_session';
-const ACTIVE_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const ACTIVE_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 
 function loadActiveSession() {
   try {
@@ -403,7 +467,7 @@ export default function ClinicalModeFlow() {
   // returns to the results screen — or to the consent question if they
   // never answered it.
   const restored = useMemo(loadActiveSession, []);
-  const [screen, setScreen] = useState(restored ? (restored.consented == null ? 'storage_consent' : 'result') : 'welcome');
+  const [screen, setScreen] = useState(restored ? (restored.consented == null ? 'storage_consent' : 'result') : 'unit_code');
   const [answers, setAnswers] = useState(restored?.answers ?? {});
   const [metricH, setMetricH] = useState(false);
   const [metricW, setMetricW] = useState(false);
@@ -418,6 +482,10 @@ export default function ClinicalModeFlow() {
   const [consented, setConsented] = useState(restored?.consented ?? null); // null until the consent question is answered
   const [showPrintForm, setShowPrintForm] = useState(false);
   const [showQrPoster, setShowQrPoster] = useState(false);
+  const [showStaffPin, setShowStaffPin] = useState(false);
+  const [staffAuthed, setStaffAuthed] = useState(false);
+  const [staffSubview, setStaffSubview] = useState('menu'); // 'menu' | 'dataentry' | 'sessions'
+  const [unitCode, setUnitCode] = useState('');
 
   useEffect(() => {
     getOrCreateUid().then(setUid).catch(() => {});
@@ -540,7 +608,7 @@ export default function ClinicalModeFlow() {
    *  go to Turso + REDCap; non-consented ones stay on this device only. */
   function persistSession(didConsent, { formData, engineResult }, ref) {
     const localSave = uid
-      ? saveClinicalSession(uid, { formData, engineResult, sessionRef: ref, rawAnswers: answers, consented: didConsent }).catch(() => null)
+      ? saveClinicalSession(uid, { formData, engineResult, sessionRef: ref, rawAnswers: answers, consented: didConsent, unitCode: unitCode || undefined }).catch(() => null)
       : Promise.resolve(null);
     if (!didConsent) {
       setCloudStatus('local');
@@ -557,6 +625,7 @@ export default function ClinicalModeFlow() {
           engineResult,
           rawAnswers: answers,
           consented: true,
+          unitCode: unitCode || undefined,
         }]))
         .then(() => setCloudStatus('saved'))
         .catch(() => setCloudStatus('error'));
@@ -590,8 +659,8 @@ export default function ClinicalModeFlow() {
 
   function handleReset() {
     clearActiveSession();
-    setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setSessionRef(null); setCloudStatus(null); setConsented(null);
-    setScreen('welcome');
+    setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setSessionRef(null); setCloudStatus(null); setConsented(null); setUnitCode('');
+    setScreen('unit_code');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -628,12 +697,66 @@ export default function ClinicalModeFlow() {
     saveBusflowAndNavigate(true);
   }
 
+  if (staffAuthed) {
+    return (
+      <div className="qef-root">
+        <div style={{ padding: '1rem 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle, #e5e7eb)', paddingBottom: '0.75rem' }}>
+          <button
+            type="button"
+            className="qef-back-btn"
+            onClick={() => {
+              if (staffSubview !== 'menu') { setStaffSubview('menu'); }
+              else { setStaffAuthed(false); setStaffSubview('menu'); }
+            }}
+          >
+            <ArrowLeftIcon size={16} aria-hidden="true" /> Back
+          </button>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ms-navy, #212070)' }}>
+            Staff — {staffSubview === 'dataentry' ? 'Quick Data Entry' : staffSubview === 'sessions' ? 'Session Manager' : 'Menu'}
+          </span>
+        </div>
+
+        {staffSubview === 'menu' && (
+          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button
+              type="button"
+              className="qef-submit-btn qef-submit-btn--ready"
+              onClick={() => setStaffSubview('dataentry')}
+            >
+              Quick Data Entry
+            </button>
+            <button
+              type="button"
+              className="qef-submit-btn qef-submit-btn--ready"
+              onClick={() => setStaffSubview('sessions')}
+            >
+              Session Manager
+            </button>
+          </div>
+        )}
+
+        {staffSubview === 'dataentry' && <StaffDataEntry />}
+        {staffSubview === 'sessions' && (
+          <ClinicalSessionsManager
+            uid={uid}
+            onBack={() => setStaffSubview('menu')}
+            onNewSession={() => { setStaffAuthed(false); setStaffSubview('menu'); setScreen('unit_code'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          />
+        )}
+      </div>
+    );
+  }
+
   if (showPrintForm) {
     return <ClinicalModePrintForm onBack={() => setShowPrintForm(false)} answers={{}} />;
   }
 
   if (showQrPoster) {
     return <QrCodePoster onBack={() => setShowQrPoster(false)} />;
+  }
+
+  if (screen === 'unit_code') {
+    return <UnitCodeScreen unitCode={unitCode} setUnitCode={setUnitCode} onContinue={() => { setScreen('welcome'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />;
   }
 
   if (screen === 'welcome') {
@@ -647,10 +770,16 @@ export default function ClinicalModeFlow() {
         )}
         <WelcomeScreen
           onStart={() => { setScreen('storage_consent'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          onStaffAccess={() => { window.location.href = import.meta.env.VITE_DASHBOARD_URL || '/'; }}
+          onStaffAccess={() => setShowStaffPin(true)}
           onPrintForm={() => setShowPrintForm(true)}
           onPrintQr={() => setShowQrPoster(true)}
         />
+        {showStaffPin && (
+          <StaffAuthModal
+            onSuccess={() => { setShowStaffPin(false); setStaffAuthed(true); setStaffSubview('menu'); }}
+            onClose={() => setShowStaffPin(false)}
+          />
+        )}
       </>
     );
   }

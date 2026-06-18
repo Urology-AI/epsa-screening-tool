@@ -10,11 +10,31 @@
  *   wrangler secret put ALLOWED_ORIGIN   # e.g. https://urology-ai.github.io
  *   wrangler secret put DASHBOARD_SECRET # arbitrary secret for dashboard read-back
  *
+ * Optional KV binding for rate limiting (add to wrangler.toml):
+ *   [[kv_namespaces]]
+ *   binding = "RATE_LIMIT_KV"
+ *   id = "<your-kv-namespace-id>"
+ *
  * Routes:
  *   POST /          – import one record into REDCap (screening tool → REDCap)
  *   GET  /records   – export all records from REDCap (dashboard read-back)
  *                     Requires:  Authorization: Bearer <DASHBOARD_SECRET>
  */
+
+/** Simple sliding-window rate limiter using Cloudflare KV.
+ *  Returns true if the request should be blocked (limit exceeded). */
+async function isRateLimited(kv, key, limitPerMinute = 20) {
+  if (!kv) return false; // KV not bound — skip (log a warning in production)
+  const now = Date.now();
+  const windowStart = now - 60_000;
+  const raw = await kv.get(key, { type: 'json' });
+  const timestamps = Array.isArray(raw) ? raw.filter(t => t > windowStart) : [];
+  if (timestamps.length >= limitPerMinute) return true;
+  timestamps.push(now);
+  // TTL of 90s; the window only needs 60s but give it a buffer
+  await kv.put(key, JSON.stringify(timestamps), { expirationTtl: 90 });
+  return false;
+}
 
 export default {
   async fetch(request, env) {
@@ -101,6 +121,15 @@ export default {
     // ── POST / — import one record ────────────────────────────────────────────
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    }
+
+    // Rate limit: 20 submissions per IP per minute
+    const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (await isRateLimited(env.RATE_LIMIT_KV, `rl:${clientIp}`, 20)) {
+      return new Response(JSON.stringify({ error: 'Too many requests — please wait a moment' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
     }
 
     let body;

@@ -1,0 +1,587 @@
+/* ─── Clinical Sessions Manager ─── */
+
+.csm-root {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--app-bg, #f5f5f7);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.csm-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--ms-navy, #212070);
+  color: #fff;
+}
+
+.csm-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.csm-back-btn:hover { background: rgba(255,255,255,0.25); }
+
+.csm-title {
+  flex: 1;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.csm-header-actions { display: flex; gap: 0.5rem; }
+
+.csm-icon-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.35rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.csm-icon-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Unsaved ePSA session banner ── */
+.csm-busflow-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+}
+
+.csm-busflow-icon {
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.csm-busflow-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.csm-busflow-text strong {
+  font-size: 0.8125rem;
+  color: #1e3a8a;
+}
+.csm-busflow-text span {
+  font-size: 0.75rem;
+  color: #3b82f6;
+}
+
+.csm-busflow-save-btn {
+  padding: 0.4rem 0.875rem;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.csm-busflow-save-btn:hover { background: #1e40af; }
+
+/* ── Toolbar ── */
+.csm-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--line-200);
+  flex-wrap: wrap;
+}
+
+.csm-toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 7px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid var(--line-200);
+  background: var(--surface);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.csm-toolbar-btn:hover:not(:disabled) { background: var(--surface-subtle); }
+.csm-toolbar-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.csm-toolbar-btn--primary {
+  background: var(--ms-navy, #212070);
+  color: #fff;
+  border-color: transparent;
+}
+.csm-toolbar-btn--primary:hover { background: #1a1959; }
+.csm-toolbar-btn--loading { opacity: 0.7; cursor: wait; }
+.csm-toolbar-btn--ok { color: #166534; border-color: #bbf7d0; background: #dcfce7; }
+.csm-toolbar-btn--err { color: #991b1b; border-color: #fecaca; background: #fee2e2; }
+.csm-toolbar-btn--danger { color: #991b1b; }
+.csm-toolbar-btn--danger:hover:not(:disabled) { background: #fee2e2; border-color: #fecaca; }
+.csm-toolbar-btn--confirm { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; font-weight: 800; }
+.csm-toolbar-btn--confirm:hover:not(:disabled) { background: #fecaca; }
+
+/* ── Import message ── */
+.csm-import-msg {
+  margin: 0.5rem 1.25rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.csm-import-msg--err {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+/* ── Session list ── */
+.csm-list {
+  flex: 1;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.csm-empty {
+  text-align: center;
+  color: var(--ink-600);
+  font-size: 0.9rem;
+  padding: 2.5rem 1rem;
+}
+
+/* ── Session row ── */
+.csm-row {
+  background: var(--surface);
+  border: 1px solid var(--line-200);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.csm-row-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.csm-row-header:hover { background: var(--surface-subtle); }
+
+.csm-tier-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.csm-row-date {
+  font-size: 0.8rem;
+  color: var(--ink-600);
+  flex-shrink: 0;
+}
+
+.csm-row-ref {
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.04em;
+  color: var(--ms-navy, #212070);
+  background: #e8eaf6;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.csm-row-meta {
+  font-size: 0.8125rem;
+  color: var(--ink-700);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.csm-row-tier {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Session type badge ── */
+.csm-row-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.csm-row-badge--full {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+.csm-row-badge--cloud {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.csm-row-badge--local {
+  background: #f3f4f6;
+  color: #374151;
+}
+.csm-row-badge--both {
+  background: #dcfce7;
+  color: #15803d;
+}
+.csm-row-badge--synced {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.csm-row-badge--unsynced {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* ── Row body ── */
+.csm-row-body {
+  border-top: 1px solid var(--line-200);
+  padding: 0.75rem 1rem 1rem;
+}
+
+.csm-row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.csm-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--line-200);
+  background: var(--surface);
+  color: var(--ink-900);
+  cursor: pointer;
+}
+.csm-action-btn:hover:not(:disabled) { background: var(--surface-subtle); }
+.csm-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.csm-action-btn--redcap { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
+.csm-action-btn--redcap:hover { background: #dbeafe; }
+.csm-action-btn--ok { color: #166534; border-color: #bbf7d0; background: #dcfce7; }
+.csm-action-btn--err { color: #991b1b; border-color: #fecaca; background: #fee2e2; }
+
+.csm-action-btn--delete { color: #991b1b; }
+.csm-action-btn--delete:hover { background: #fee2e2; border-color: #fecaca; }
+.csm-action-btn--confirm { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; font-weight: 800; }
+.csm-action-btn--primary { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+.csm-action-btn--primary:hover:not(:disabled) { background: #1e40af; }
+
+/* ── Part 2 entry form ── */
+.csm-part2-form {
+  margin: 0.75rem 0 0;
+  padding: 1rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+.csm-part2-form-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0369a1;
+}
+.csm-part2-fields-entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.csm-part2-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-700);
+  min-width: 140px;
+}
+.csm-part2-label--check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-end;
+  padding-bottom: 0.25rem;
+}
+.csm-part2-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line-200);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--ink-900);
+}
+.csm-part2-error {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: #991b1b;
+}
+.csm-part2-form-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ── Result preview (read-only) ── */
+.csm-result-preview {
+  border: 1px solid var(--line-200);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Part 2 summary panel ── */
+.csm-part2-summary {
+  border-top: 1px solid var(--line-200);
+  padding: 0.875rem 1rem;
+  background: #faf5ff;
+}
+.csm-part2-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6d28d9;
+  margin-bottom: 0.5rem;
+}
+.csm-part2-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--ink-700);
+}
+
+/* ── Storage note ── */
+.csm-storage-note {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--ink-500);
+  padding: 0.75rem 1rem 1.25rem;
+}
+
+/* ── PIN modal overlay ── */
+.csm-pin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1rem;
+}
+
+.csm-pin-modal {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 2rem 1.75rem;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.csm-pin-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--ms-navy, #212070);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.csm-pin-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0;
+  text-align: center;
+}
+
+.csm-pin-sub {
+  font-size: 0.8125rem;
+  color: var(--ink-600);
+  margin: -0.5rem 0 0;
+  text-align: center;
+}
+
+.csm-pin-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--line-200);
+  border-radius: 8px;
+  font-size: 1.25rem;
+  letter-spacing: 0.25em;
+  text-align: center;
+  font-family: monospace;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink-900);
+}
+.csm-pin-input:focus { border-color: var(--ms-navy, #212070); }
+.csm-pin-input--error { border-color: #ef4444; }
+
+.csm-pin-error {
+  font-size: 0.8rem;
+  color: #dc2626;
+  margin: -0.5rem 0 0;
+}
+
+.csm-pin-submit {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--ms-navy, #212070);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+}
+.csm-pin-submit:hover { background: #1a1959; }
+.csm-pin-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.csm-pin-cancel {
+  background: none;
+  border: none;
+  color: var(--ink-600);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.csm-pin-cancel:hover { color: var(--ink-900); }
+
+/* ── Staff link on welcome screen ── */
+.qef-staff-link {
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--ink-500);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  text-decoration: none;
+  opacity: 0.6;
+  margin-top: 0.5rem;
+}
+.qef-staff-link:hover { opacity: 1; text-decoration: underline; }
+
+/* ── Print styles ── */
+@media print {
+  .csm-root,
+  .csm-header,
+  .csm-toolbar,
+  .csm-list,
+  .csm-row-actions,
+  .csm-storage-note,
+  .csm-row-header { display: none !important; }
+
+  .print-target {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 9999;
+    padding: 1rem;
+    overflow: auto;
+  }
+}
+
+/* No-consent badge + mark-consented action */
+.csm-row-badge--noconsent {
+  color: #b45309;
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.csm-row-badge--unit {
+  color: #1e40af;
+  border-color: #93c5fd;
+  background: #eff6ff;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.csm-row-badge--redcap {
+  color: #065f46;
+  border-color: #6ee7b7;
+  background: #ecfdf5;
+}
+.csm-action-btn--consent { color: #b45309; border-color: #fde68a; background: #fffbeb; }
+.csm-action-btn--consent:hover { background: #fef3c7; }
+
+/* ── Dark-mode overrides for light-pastel surfaces ── */
+.theme-dark .csm-busflow-banner {
+  background: rgba(59,130,246,0.12);
+  border-bottom-color: rgba(59,130,246,0.3);
+}
+.theme-dark .csm-busflow-text strong { color: var(--ink-900); }
+.theme-dark .csm-busflow-text span { color: var(--ink-700); }
+
+.theme-dark .csm-row-ref {
+  color: var(--brand-600);
+  background: rgba(6,171,235,0.12);
+}
+
+.theme-dark .csm-part2-form {
+  background: rgba(6,171,235,0.08);
+  border-color: rgba(6,171,235,0.25);
+}
+.theme-dark .csm-part2-form-title { color: var(--brand-600); }
+.theme-dark .csm-part2-input {
+  background: var(--surface-subtle);
+  border-color: var(--line-200);
+  color: var(--ink-900);
+}
+
+.theme-dark .csm-part2-summary {
+  background: rgba(124,58,237,0.1);
+}
+.theme-dark .csm-part2-title { color: #c4b5fd; }
+
+.theme-dark .csm-pin-overlay { background: rgba(0,0,0,0.7); }
