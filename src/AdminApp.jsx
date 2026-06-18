@@ -8,7 +8,18 @@ import { msalConfig, loginRequest } from './config/msal.js';
 import { LockIcon, LogOutIcon } from 'lucide-react';
 import './App.css';
 
-const msalInstance = new PublicClientApplication(msalConfig);
+// Admin needs its own redirectUri pointing to /admin, not the kiosk root.
+// Azure Portal must also have this URI registered.
+const adminMsalConfig = {
+  ...msalConfig,
+  auth: {
+    ...msalConfig.auth,
+    redirectUri: window.location.origin + '/admin',
+    postLogoutRedirectUri: window.location.origin + '/admin',
+  },
+};
+
+const msalInstance = new PublicClientApplication(adminMsalConfig);
 const msalReady = msalInstance.initialize();
 
 function AdminContent() {
