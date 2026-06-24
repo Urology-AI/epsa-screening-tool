@@ -501,22 +501,6 @@ export default function ClinicalModeFlow() {
 
   const set = (key, val) => setAnswers((p) => ({ ...p, [key]: val }));
 
-  // After any answer is recorded, scroll to the next unanswered question.
-  const prevAnswered = useRef(0);
-  useEffect(() => {
-    if (screen !== 'form') return;
-    if (answered <= prevAnswered.current) { prevAnswered.current = answered; return; }
-    prevAnswered.current = answered;
-    const nextKey = QUESTION_ORDER.find(k => !isAnswered[k]);
-    if (!nextKey) return;
-    const el = document.querySelector(`[data-qid="${nextKey}"]`);
-    if (el) {
-      // Small delay so the answered-card animation fires first
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answered, screen]);
-
   const bmi = useMemo(() => deriveBmi(answers, metricH, metricW), [answers, metricH, metricW]);
 
   // Per-question answered state
@@ -542,6 +526,22 @@ export default function ClinicalModeFlow() {
 
   const answered = Object.values(isAnswered).filter(Boolean).length;
   const ready = answered === TOTAL;
+
+  // After any answer is recorded, scroll to the next unanswered question.
+  const prevAnswered = useRef(0);
+  useEffect(() => {
+    if (screen !== 'form') return;
+    if (answered <= prevAnswered.current) { prevAnswered.current = answered; return; }
+    prevAnswered.current = answered;
+    const nextKey = QUESTION_ORDER.find(k => !isAnswered[k]);
+    if (!nextKey) return;
+    const el = document.querySelector(`[data-qid="${nextKey}"]`);
+    if (el) {
+      // Small delay so the answered-card animation fires first
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answered, screen]);
 
   function handleAgeBlur() {
     const age = parseInt(answers.age);
