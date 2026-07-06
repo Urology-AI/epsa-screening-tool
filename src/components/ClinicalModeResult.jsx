@@ -3,6 +3,8 @@ import RiskGauge from './RiskGauge.jsx';
 import { ArrowRightIcon, RotateCcwIcon, EditIcon, TrendingUpIcon, ChevronDownIcon, ChevronUpIcon, PrinterIcon, CloudIcon, DownloadIcon } from 'lucide-react';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import ClinicalModeResultPrint from './ClinicalModeResultPrint.jsx';
+import ClinicianChecklist from './ClinicianChecklist.jsx';
+import { saveChecklistToTurso } from '../services/tursoService';
 import './ClinicalModeResult.css';
 
 
@@ -37,6 +39,18 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
   const [showPrintForm, setShowPrintForm] = useState(false);
   const [showResultPrint, setShowResultPrint] = useState(false);
   const [showCloudNote, setShowCloudNote] = useState(false);
+  const [checklistDone, setChecklistDone] = useState(false);
+  const [checklistData, setChecklistData] = useState(null);
+
+  function handleChecklistSubmit(data) {
+    setChecklistData(data);
+    setChecklistDone(true);
+    saveChecklistToTurso(sessionRef, data).catch(() => {});
+  }
+
+  function handleChecklistSkip() {
+    setChecklistDone(true);
+  }
 
   if (showPrintForm) {
     return <ClinicalModePrintForm answers={answers ?? {}} onBack={() => setShowPrintForm(false)} />;
@@ -222,6 +236,14 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
         Model trained on Grade Group ≥3 outcome (N=94 cohort). AUA/NCCN define clinically significant cancer as Grade Group ≥2. Validated variables: age, race, family history, PSA thresholds. Other factors are research-based.
       </p>
 
+
+      {!readOnly && cloudStatus === 'saved' && !checklistDone && (
+        <ClinicianChecklist
+          sessionRef={sessionRef}
+          onSubmit={handleChecklistSubmit}
+          onSkip={handleChecklistSkip}
+        />
+      )}
 
       {!readOnly && (
         <div className="qer-actions">

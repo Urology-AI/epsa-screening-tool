@@ -46,6 +46,7 @@ export function normaliseSession(raw) {
     rawAnswers: raw.rawAnswers ?? null,
     consented: raw.consented ?? null,
     redcapPushedAt: raw.redcapPushedAt ?? null,
+    checklistData: raw.checklistData ?? null,
   };
 }
 

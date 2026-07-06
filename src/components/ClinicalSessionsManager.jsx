@@ -139,7 +139,7 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
     setPushing(true);
     setPushStatus(null);
     try {
-      const result = await submitToRedcap(session.formData, session.sessionRef);
+      const result = await submitToRedcap(session.formData, session.sessionRef, session.checklistData);
       if (!result.success) throw new Error(result.error);
       setPushStatus('ok');
       // Persist the timestamp locally and in Turso

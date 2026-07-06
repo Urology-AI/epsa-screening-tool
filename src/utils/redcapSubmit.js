@@ -52,7 +52,7 @@ const FAMILY_MAP = {
   'unknown': 3,
 };
 
-function buildClinicalRecord(formData, sessionRef) {
+function buildClinicalRecord(formData, sessionRef, checklistData) {
   const chemical_exposure = CHEM_MAP[formData.chemicalExposure] ?? undefined;
 
   // Convert height/weight to both unit systems for REDCap
@@ -95,6 +95,12 @@ function buildClinicalRecord(formData, sessionRef) {
     // symptom_scores
     quality_of_life:     formData.ipssQol,   // 0–6  (IPSS Q8)
     erection_confidence: formData.shim?.[0], // 1–5  (SHIM Q1)
+
+    // clinician impact checklist
+    clinician_influence:     checklistData?.influence ?? '',
+    clinician_action:        checklistData?.action ?? '',
+    clinician_notes:         checklistData?.notes ?? '',
+    clinician_checklist_at:  checklistData ? new Date().toISOString() : '',
   };
 
   // Drop undefined / null / empty
@@ -109,13 +115,13 @@ function buildClinicalRecord(formData, sessionRef) {
  * Submit a screening record to REDCap via the proxy worker.
  * Returns { success: true } or { success: false, error: string }.
  */
-export async function submitToRedcap(formData, sessionRef) {
+export async function submitToRedcap(formData, sessionRef, checklistData) {
   const proxyUrl = import.meta.env.VITE_REDCAP_PROXY_URL;
   if (!proxyUrl) {
     return { success: false, error: 'REDCap proxy not configured' };
   }
 
-  const record = buildClinicalRecord(formData, sessionRef);
+  const record = buildClinicalRecord(formData, sessionRef, checklistData);
 
   try {
     const res = await fetch(proxyUrl, {
