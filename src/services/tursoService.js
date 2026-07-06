@@ -38,6 +38,10 @@ const CREATE_SQL = `CREATE TABLE IF NOT EXISTS clinical_sessions (
   tier_key TEXT, tier_label TEXT, display_range TEXT,
   psa REAL, pirads TEXT, on_hormonal_therapy INTEGER,
   redcap_pushed_at TEXT,
+  clinician_influence TEXT,
+  clinician_action TEXT,
+  clinician_notes TEXT,
+  clinician_checklist_at TEXT,
   full_record TEXT
 )`;
 
@@ -45,6 +49,10 @@ const CREATE_SQL = `CREATE TABLE IF NOT EXISTS clinical_sessions (
 // wrapped in allSettled so existing tables silently gain the column.
 const MIGRATE_COLS = [
   ['redcap_pushed_at', 'TEXT'],
+  ['clinician_influence', 'TEXT'],
+  ['clinician_action', 'TEXT'],
+  ['clinician_notes', 'TEXT'],
+  ['clinician_checklist_at', 'TEXT'],
 ];
 
 export function isTursoConfigured() {
@@ -329,6 +337,63 @@ export async function markRedcapPushed(session) {
     args: [now, cloudId],
   });
   return now;
+}
+
+/**
+ * Persist the clinician checklist onto an existing session row, keyed by
+ * session_ref. Updates the flat columns and merges checklistData into the
+ * full_record JSON blob.
+ */
+export async function saveChecklistToTurso(sessionRef, checklistData) {
+  if (!isTursoConfigured()) return { ok: false, reason: 'turso_not_configured' };
+  if (!sessionRef) return { ok: false, reason: 'missing_session_ref' };
+  const client = getClient();
+  await ensureSchema(client);
+
+  const checklistAt = new Date().toISOString();
+
+  const existing = await client.execute({
+    sql: 'SELECT full_record FROM clinical_sessions WHERE session_ref = ? LIMIT 1',
+    args: [sessionRef],
+  });
+  const row = existing.rows[0];
+  let fullRecord = null;
+  if (row) {
+    const raw = row[existing.columns.indexOf('full_record')];
+    if (raw) {
+      try { fullRecord = JSON.parse(raw); } catch { fullRecord = null; }
+    }
+  }
+  if (fullRecord) {
+    fullRecord = { ...fullRecord, checklistData };
+  }
+
+  await client.execute({
+    sql: `UPDATE clinical_sessions
+          SET clinician_influence = ?,
+              clinician_action = ?,
+              clinician_notes = ?,
+              clinician_checklist_at = ?
+              ${fullRecord ? ', full_record = ?' : ''}
+          WHERE session_ref = ?`,
+    args: fullRecord
+      ? [
+          checklistData.influence,
+          checklistData.action,
+          checklistData.notes || null,
+          checklistAt,
+          JSON.stringify(fullRecord),
+          sessionRef,
+        ]
+      : [
+          checklistData.influence,
+          checklistData.action,
+          checklistData.notes || null,
+          checklistAt,
+          sessionRef,
+        ],
+  });
+  return { ok: true };
 }
 
 /**
