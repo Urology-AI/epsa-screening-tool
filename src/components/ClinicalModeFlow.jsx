@@ -8,7 +8,7 @@ import ThemeSwitcher from './ThemeSwitcher.jsx';
 import TextScaleControl from './TextScaleControl.jsx';
 import { fieldReferences } from '../utils/fieldReferences';
 import { calculateDynamicEPsa } from '../utils/dynamicCalculator';
-import { DEFAULT_CALCULATOR_CONFIG } from '../config/calculatorConfig';
+import { DEFAULT_CALCULATOR_CONFIG } from '@epsa/engine';
 import { FH_MAP, DIET_MAP, deriveIpssFromQol, expandShimSingle } from '../utils/epsaFormUtils';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
