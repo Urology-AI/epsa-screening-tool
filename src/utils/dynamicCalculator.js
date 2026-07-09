@@ -5,12 +5,12 @@
  * Current ePSA calculator is the default configuration
  */
 
-import { DEFAULT_CALCULATOR_CONFIG } from '../config/calculatorConfig';
+import { DEFAULT_CALCULATOR_CONFIG } from '@epsa/engine';
 import {
   calculateDynamicEPsa as calculateDynamicEPsaEngine,
   calculateDynamicEPsaPost as calculateDynamicEPsaPostEngine,
   validateInputs,
-} from './epsaEngine';
+} from '@epsa/engine';
 
 export const CALCULATOR_CONFIG_STORAGE_KEY = 'epsa_calculator_config';
 export const CALCULATOR_CONFIG_DOC_PATH = { collection: 'calculatorConfig', doc: 'published' };

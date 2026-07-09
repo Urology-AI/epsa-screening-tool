@@ -6,3 +6,5 @@ dist/
 admin-dashboard/node_modules/
 admin-dashboard/dist/
 .DS_Store
+.vercel
+.env*
