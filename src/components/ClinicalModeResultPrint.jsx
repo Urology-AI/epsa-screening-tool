@@ -25,7 +25,7 @@ function fmtFH(v) {
     ?? { 0: 'None', 1: '1 first-degree relative', 2: '2+ first-degree relatives' }[v] ?? v ?? '—';
 }
 function fmtExercise(v) {
-  return { 0: 'Regular (≥150 min/wk)', 1: 'Some (<150 min/wk)', 2: 'None' }[String(v)] ?? v ?? '—';
+  return { 0: 'Regular (3+ days/wk, 1+ hour)', 1: 'Moderate (1-2 days/wk, 1+ hour)', 2: 'Sedentary (rarely or never)' }[String(v)] ?? v ?? '—';
 }
 function fmtSmoking(v) {
   return { 0: 'Never', 1: 'Former', 2: 'Current' }[String(v)] ?? v ?? '—';

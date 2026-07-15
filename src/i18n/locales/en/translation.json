@@ -637,9 +637,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "Regular (3+ days/week)",
-        "some": "Some (1-2 days/week)",
-        "none": "None"
+        "regular": "Regular (3+ days/week, 1+ hour)",
+        "some": "Moderate (1-2 days/week, 1+ hour)",
+        "none": "Sedentary (rarely or never)"
       },
       "smoking": {
         "current": "Current",
@@ -1250,9 +1250,9 @@
     "defaultsHint": "Using: Smoking = Never, Diet = Regular (Western), Chemical exposure = No, Genetic mutation = No, Inflammation = No, Comorbidities = None, Exercise = Regular.",
     "exerciseLabel": "Exercise level",
     "exercise": {
-      "regular": "Regular (3+ days/week)",
-      "some": "Some (1-2 days/week)",
-      "none": "None"
+      "regular": "Regular (3+ days/week, 1+ hour)",
+      "some": "Moderate (1-2 days/week, 1+ hour)",
+      "none": "Sedentary (rarely or never)"
     },
     "comorbiditiesLabel": "Comorbidities",
     "comorbidities": {
