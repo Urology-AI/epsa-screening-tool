@@ -175,6 +175,21 @@ const ClinicalModeResultPrint = ({ result, postResult = null, formData, rawAnswe
           </div>
         )}
 
+        {/* Internal risk model vs. guideline-criteria mismatch — kept visible
+            and distinctly labeled, never merged into the guideline verdict. */}
+        {(tierKey === 'elevated' || result?.recommendPSA === true) &&
+          typeof result?.psaGuidelineSupportCount === 'number' &&
+          result.psaGuidelineSupportCount === 0 && (
+          <div className="cmrp-tier-block" style={{ borderLeft: '4px solid #d97706', color: '#92400e' }}>
+            <div className="cmrp-tier-eyebrow">Internal Risk Model vs. Screening Guidelines — Not the Same Signal</div>
+            <p className="cmrp-tier-body"><strong>ePSA internal risk assessment:</strong> Strong Candidate for PSA Testing (based on risk factors).</p>
+            <p className="cmrp-tier-body"><strong>Formal guideline status:</strong> Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.</p>
+            <p className="cmrp-tier-body">
+              Based on these risk factors, the patient may benefit from discussing PSA testing with a physician, even though standard age-based screening guideline criteria are not currently met. This is not a substitute for guideline-based screening recommendations — individual risk should be discussed with a healthcare provider.
+            </p>
+          </div>
+        )}
+
         {/* Answers table */}
         <div className="cmrp-section-title">Submitted Answers</div>
         <table className="cmrp-table">

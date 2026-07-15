@@ -73,6 +73,7 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
     epsaTierKey, epsaTierLabel, epsaGuidelineText,
     itemImpacts = [], score, calculationDetails,
     aboveMaxScreeningAge,
+    psaGuidelineSupportCount, psaRecommendReason, recommendPSA,
   } = result;
 
   const gaugeScore = mapRawToGauge(
@@ -83,6 +84,21 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
 
   const isHigher = epsaTierKey === 'elevated';
   const isLower  = epsaTierKey === 'low';
+
+  // ── Internal risk model vs. formal screening-guideline criteria ──
+  // The ePSA risk model (itemImpacts / epsaTierKey) can flag someone as a
+  // "Strong Candidate for PSA Testing" based on risk factors (family history,
+  // obesity, smoking, sedentary lifestyle, poor urinary symptom scores, etc.)
+  // even when they do not meet formal AUA/NCCN/EAU/ERSPC age-based screening
+  // criteria (e.g., a 40-year-old below the standard screening age window).
+  // `psaGuidelineSupportCount === 0` means none of the four major guidelines
+  // support a PSA recommendation for this specific reason/profile — i.e. the
+  // internal model and the guideline verdict disagree. We surface both
+  // signals distinctly rather than silently upgrading the guideline verdict.
+  const isInternalCandidate = isHigher || recommendPSA === true;
+  const guidelineCriteriaNotMet =
+    typeof psaGuidelineSupportCount === 'number' && psaGuidelineSupportCount === 0;
+  const showRiskModelVsGuidelineNotice = isInternalCandidate && guidelineCriteriaNotMet;
 
   const sorted = [...itemImpacts].sort((a, b) => Number(b.points) - Number(a.points));
   const TOP_N = 5;
@@ -241,6 +257,27 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
               <p className="qer-guideline-body">{postResult.mriRecommendMessage}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Internal risk model vs. guideline-criteria mismatch ──
+          Shown when the ePSA risk model flags the patient as a candidate for
+          PSA testing but formal screening guidelines (AUA/NCCN/EAU/ERSPC) do
+          not currently support that recommendation for this profile/age. Both
+          signals stay visible and clearly labeled — the guideline verdict is
+          never silently overridden. */}
+      {showRiskModelVsGuidelineNotice && (
+        <div className="qer-guideline-banner qer-guideline-banner--moderate qer-model-guideline-mismatch">
+          <div className="qer-guideline-eyebrow">Internal Risk Model vs. Screening Guidelines — Not the Same Signal</div>
+          <p className="qer-guideline-body">
+            <strong>ePSA internal risk assessment:</strong> Strong Candidate for PSA Testing (based on your risk factors).
+          </p>
+          <p className="qer-guideline-body" style={{ marginTop: '0.35rem' }}>
+            <strong>Formal guideline status:</strong> Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.
+          </p>
+          <p className="qer-guideline-body" style={{ marginTop: '0.5rem' }}>
+            Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.
+          </p>
         </div>
       )}
 
