@@ -402,6 +402,16 @@
         "helper": "Count close blood relatives, such as a father, brother, or son, who have had prostate cancer.",
         "description": "Having a father or brother with prostate cancer more than doubles a man's risk. The risk is even higher with multiple affected relatives."
       },
+      "familyHistoryBreastCancer": {
+        "title": "Family History of Breast Cancer",
+        "helper": "Has a close blood relative (parent, sibling, or child) had breast cancer?",
+        "description": "Breast cancer in the family can point to an inherited BRCA1/BRCA2 mutation, which also raises prostate cancer risk and its aggressiveness."
+      },
+      "familyHistoryPancreaticCancer": {
+        "title": "Family History of Pancreatic Cancer",
+        "helper": "Has a close blood relative (parent, sibling, or child) had pancreatic cancer?",
+        "description": "Pancreatic cancer in the family can point to an inherited BRCA1/BRCA2 mutation, which also raises prostate cancer risk and its aggressiveness."
+      },
       "inflammationHistory": {
         "title": "Inflammation History",
         "description": "Long-lasting inflammation in the body — such as prostate inflammation (prostatitis) or inflammatory bowel disease (ulcerative colitis, Crohn's) — may raise prostate cancer risk over time."

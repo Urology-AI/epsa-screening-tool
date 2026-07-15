@@ -555,6 +555,12 @@
 }
 .theme-dark .qef-sublabel { color: var(--ink-800); }
 
+.qef-sublabel--nested {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--ink-200, #e5e7eb);
+}
+
 .qef-citation {
   font-size: 0.8125rem;
   color: var(--ink-700);

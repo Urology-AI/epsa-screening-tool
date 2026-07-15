@@ -42,6 +42,13 @@ function fmtComorbidities(v) {
     0: 'None', 1: 'One', 2: 'Two or more' }[String(v)] ?? v ?? '—';
 }
 function fmtYnu(v) { return { yes: 'Yes', no: 'No', unknown: 'Unknown' }[v] ?? v ?? '—'; }
+function fmtBrca(v) {
+  return {
+    yes: 'Positive', no: 'Negative', unknown: 'Unknown / not tested',
+    other_elevated: 'Not tested — elevated by family history (breast/pancreatic)',
+    other_unknown: 'Unknown', lynch: 'Positive (Lynch syndrome)', positive: 'Positive', negative: 'Negative',
+  }[v] ?? v ?? '—';
+}
 function fmtEthnicity(v) {
   return { 'hispanic-latino': 'Hispanic / Latino', 'not-hispanic-latino': 'Not Hispanic / Latino', unknown: 'Unknown' }[v] ?? v ?? '—';
 }
@@ -68,7 +75,9 @@ function buildRows(formData, rawAnswers) {
     { label: 'Race',                value: fmtRace(f.race ?? a.race) },
     { label: 'Ethnicity',           value: fmtEthnicity(f.ethnicity ?? a.ethnicity) },
     { label: 'Family history',      value: fmtFH(a.familyHistory ?? f.familyHistory) },
-    { label: 'BRCA2 / Lynch status',value: fmtYnu(f.brcaStatus ?? a.brca) },
+    { label: 'Family history of breast cancer',    value: fmtYnu(a.familyHistoryBreastCancer ?? f.familyHistoryBreastCancer) },
+    { label: 'Family history of pancreatic cancer',value: fmtYnu(a.familyHistoryPancreaticCancer ?? f.familyHistoryPancreaticCancer) },
+    { label: 'BRCA2 / Lynch status',value: fmtBrca(f.brcaStatus ?? a.brca) },
     { label: 'Height',              value: height },
     { label: 'Weight',              value: weight },
     { label: 'BMI',                 value: bmiLabel },
