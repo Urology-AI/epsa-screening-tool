@@ -724,13 +724,13 @@
       "toggleShort": "Usa versione breve (una sola domanda sulla gravità)",
       "toggleFull": "Usa SHIM completo (5 domande)",
       "skip": "Salta — nessun problema di erezione",
-      "singleQuestionLabel": "In generale, come descriveresti la tua funzione erettile negli ultimi 6 mesi?",
+      "singleQuestionLabel": "Negli ultimi 6 mesi, come descriveresti la tua capacità di ottenere un'erezione?",
       "options": {
-        "none": "Nessuna disfunzione erettile",
-        "mild": "ED lieve",
-        "mildModerate": "ED lieve–moderata",
-        "moderate": "ED moderata",
-        "severe": "ED grave"
+        "none": "Nessun problema — ottenuta facilmente",
+        "mild": "Ottenuta facilmente, con qualche difficoltà occasionale",
+        "mildModerate": "Ottenuta, ma con qualche difficoltà",
+        "moderate": "Ottenuta con notevole difficoltà",
+        "severe": "Raramente o mai in grado di ottenere un'erezione"
       }
     },
     "abnormalPsaLikelihood": "Probabilità stimata di un PSA anomalo / csPCa:",
