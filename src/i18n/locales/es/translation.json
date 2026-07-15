@@ -766,7 +766,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "Nivel de PSA"
+        "sectionTitle": "Historial de pruebas de PSA"
       },
       "mri": {
         "sectionTitle": "Resultados de resonancia magnética (opcional)"
@@ -782,24 +782,14 @@
       "calculate": "Calcular la evaluación de riesgos ✓"
     },
     "psa": {
-      "sectionTitle": "Nivel de PSA",
-      "q1": "¿Conoce su nivel de PSA?",
-      "q1OptNo": "No, no sé mi PSA",
-      "q1OptYes": "Sí, conozco mi nivel de PSA",
-      "q2": "Ingrese el nivel de PSA (ng/mL)",
-      "psaPlaceholder": "Nivel de PSA (0,1-100)",
-      "psaInvalidValidity": "El nivel de PSA debe estar entre 0,1 y 100 ng/ml.",
-      "psaInvalid": "El nivel de PSA debe estar entre 0,1 y 100 ng/ml.",
-      "psaNote": "El PSA (antígeno prostático específico) es un análisis de sangre que se utiliza para detectar el cáncer de próstata.",
-      "q3": "¿Está tomando algún medicamento hormonal que pueda afectar el PSA?",
-      "q3InfoTitle": "Medicamentos como finasterida (Propecia/Proscar), dutasterida (Avodart) u otros inhibidores de la 5-alfa reductasa pueden reducir los niveles de PSA en aproximadamente un 50%. Esto es importante para una evaluación de riesgos precisa.",
-      "q3OptNo": "No / No estoy seguro",
-      "q3OptYes": "Sí, estoy tomando terapia hormonal.",
-      "q4Label": "¿Qué medicamento? (opcional)",
-      "q4OptFinasteride": "Finasterida (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasterida (Avodart)",
-      "q4OptOther": "Otro / No estoy seguro",
-      "q4Note": "Nota: Estos medicamentos pueden reducir el PSA en aproximadamente un 50 %. Es posible que su médico necesite ajustar el valor de PSA para una interpretación precisa."
+      "sectionTitle": "Historial de pruebas de PSA",
+      "q1": "¿Se ha realizado alguna vez una prueba de PSA?",
+      "q1OptYes": "Sí",
+      "q1OptNo": "No",
+      "q2": "¿Su nivel de PSA fue normal o elevado?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Elevado",
+      "q2OptNotSure": "No estoy seguro"
     },
     "mri": {
       "sectionTitle": "Resultados de resonancia magnética (opcional)",

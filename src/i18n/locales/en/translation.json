@@ -766,7 +766,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA Level"
+        "sectionTitle": "PSA Testing History"
       },
       "mri": {
         "sectionTitle": "MRI Results (Optional)"
@@ -782,24 +782,14 @@
       "calculate": "Calculate Risk Assessment ✓"
     },
     "psa": {
-      "sectionTitle": "PSA Level",
-      "q1": "Do you know your PSA level?",
-      "q1OptNo": "No, I don't know my PSA",
-      "q1OptYes": "Yes, I know my PSA level",
-      "q2": "Enter PSA Level (ng/mL)",
-      "psaPlaceholder": "PSA level (0.1-100)",
-      "psaInvalidValidity": "PSA level must be between 0.1 and 100 ng/mL",
-      "psaInvalid": "PSA level must be between 0.1 and 100 ng/mL",
-      "psaNote": "PSA (Prostate-Specific Antigen) is a blood test used to screen for prostate cancer.",
-      "q3": "Are you taking any hormonal medications that may affect PSA?",
-      "q3InfoTitle": "Medications like finasteride (Propecia/Proscar), dutasteride (Avodart), or other 5-alpha reductase inhibitors can lower PSA levels by approximately 50%. This is important for accurate risk assessment.",
-      "q3OptNo": "No / Not sure",
-      "q3OptYes": "Yes, I'm taking hormonal therapy",
-      "q4Label": "Which medication? (optional)",
-      "q4OptFinasteride": "Finasteride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasteride (Avodart)",
-      "q4OptOther": "Other / Not sure",
-      "q4Note": "Note: These medications can lower PSA by ~50%. Your doctor may need to adjust the PSA value for accurate interpretation."
+      "sectionTitle": "PSA Testing History",
+      "q1": "Have you ever been tested for PSA before?",
+      "q1OptYes": "Yes",
+      "q1OptNo": "No",
+      "q2": "Was your PSA level normal or elevated?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Elevated",
+      "q2OptNotSure": "Not sure"
     },
     "mri": {
       "sectionTitle": "MRI Results (Optional)",

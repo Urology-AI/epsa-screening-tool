@@ -766,7 +766,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA水平"
+        "sectionTitle": "PSA检测史"
       },
       "mri": {
         "sectionTitle": "MRI结果（可选）"
@@ -782,24 +782,14 @@
       "calculate": "计算风险评估 ✓"
     },
     "psa": {
-      "sectionTitle": "PSA水平",
-      "q1": "您知道您的PSA水平吗？",
-      "q1OptNo": "不，我不知道我的PSA",
-      "q1OptYes": "是，我知道我的PSA水平",
-      "q2": "输入PSA水平（ng/mL）",
-      "psaPlaceholder": "PSA水平（0.1-100）",
-      "psaInvalidValidity": "PSA水平必须在0.1到100 ng/mL之间",
-      "psaInvalid": "PSA水平必须在0.1到100 ng/mL之间",
-      "psaNote": "PSA（前列腺特异性抗原）是一种用于筛查前列腺癌的血液检测。",
-      "q3": "您是否正在服用可能影响PSA的激素药物？",
-      "q3InfoTitle": "非那雄胺（Propecia/Proscar）、度他雄胺（Avodart）或其他5-α还原酶抑制剂等药物可将PSA水平降低约50%。这对于准确的风险评估很重要。",
-      "q3OptNo": "否/不确定",
-      "q3OptYes": "是，我正在接受激素治疗",
-      "q4Label": "哪种药物？（可选）",
-      "q4OptFinasteride": "非那雄胺（Propecia/Proscar）",
-      "q4OptDutasteride": "度他雄胺（Avodart）",
-      "q4OptOther": "其他/不确定",
-      "q4Note": "注意：这些药物可将PSA降低约50%。您的医生可能需要调整PSA值以进行准确解读。"
+      "sectionTitle": "PSA检测史",
+      "q1": "您以前做过PSA检测吗？",
+      "q1OptYes": "是",
+      "q1OptNo": "否",
+      "q2": "您的PSA水平是正常还是偏高？",
+      "q2OptNormal": "正常",
+      "q2OptElevated": "偏高",
+      "q2OptNotSure": "不确定"
     },
     "mri": {
       "sectionTitle": "MRI结果（可选）",

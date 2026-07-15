@@ -766,7 +766,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "Nível de PSA"
+        "sectionTitle": "Histórico de exames de PSA"
       },
       "mri": {
         "sectionTitle": "Resultados de IRM (Opcional)"
@@ -782,24 +782,14 @@
       "calculate": "Calcular Avaliação de Risco ✓"
     },
     "psa": {
-      "sectionTitle": "Nível de PSA",
-      "q1": "Você sabe seu nível de PSA?",
-      "q1OptNo": "Não, não sei meu PSA",
-      "q1OptYes": "Sim, sei meu nível de PSA",
-      "q2": "Insira o Nível de PSA (ng/mL)",
-      "psaPlaceholder": "Nível de PSA (0.1-100)",
-      "psaInvalidValidity": "O nível de PSA deve ser entre 0.1 e 100 ng/mL",
-      "psaInvalid": "O nível de PSA deve ser entre 0.1 e 100 ng/mL",
-      "psaNote": "O PSA (Antígeno Prostático Específico) é um exame de sangue usado para triagem de câncer de próstata.",
-      "q3": "Você está tomando medicamentos hormonais que podem afetar o PSA?",
-      "q3InfoTitle": "Medicamentos como finasterida (Propecia/Proscar), dutasterida (Avodart) ou outros inibidores da 5-alfa redutase podem diminuir os níveis de PSA em aproximadamente 50%. Isso é importante para avaliação precisa do risco.",
-      "q3OptNo": "Não / Não tenho certeza",
-      "q3OptYes": "Sim, estou fazendo terapia hormonal",
-      "q4Label": "Qual medicamento? (opcional)",
-      "q4OptFinasteride": "Finasterida (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasterida (Avodart)",
-      "q4OptOther": "Outro / Não tenho certeza",
-      "q4Note": "Nota: Esses medicamentos podem diminuir o PSA em ~50%. Seu médico pode precisar ajustar o valor do PSA para interpretação precisa."
+      "sectionTitle": "Histórico de exames de PSA",
+      "q1": "Você já fez um exame de PSA antes?",
+      "q1OptYes": "Sim",
+      "q1OptNo": "Não",
+      "q2": "O seu nível de PSA estava normal ou elevado?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Elevado",
+      "q2OptNotSure": "Não tenho certeza"
     },
     "mri": {
       "sectionTitle": "Resultados de IRM (Opcional)",

@@ -762,7 +762,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "Niveau PSA"
+        "sectionTitle": "Antécédents de test PSA"
       },
       "mri": {
         "sectionTitle": "Résultats IRM (Optionnel)"
@@ -778,24 +778,14 @@
       "calculate": "Calculer l'évaluation des risques ✓"
     },
     "psa": {
-      "sectionTitle": "Niveau PSA",
-      "q1": "Connaissez-vous votre niveau PSA ?",
-      "q1OptNo": "Non, je ne connais pas mon PSA",
-      "q1OptYes": "Oui, je connais mon niveau PSA",
-      "q2": "Entrez le niveau PSA (ng/mL)",
-      "psaPlaceholder": "Niveau PSA (0.1-100)",
-      "psaInvalidValidity": "Le niveau PSA doit être entre 0.1 et 100 ng/mL",
-      "psaInvalid": "Le niveau PSA doit être entre 0.1 et 100 ng/mL",
-      "psaNote": "Le PSA (Antigène Spécifique de la Prostate) est un test sanguin utilisé pour dépister le cancer de la prostate.",
-      "q3": "Prenez-vous des médicaments hormonaux susceptibles d'affecter le PSA ?",
-      "q3InfoTitle": "Les médicaments comme la finastéride (Propecia/Proscar), la dutastéride (Avodart) ou d'autres inhibiteurs de la 5-alpha réductase peuvent abaisser les niveaux de PSA d'environ 50%. C'est important pour une évaluation précise des risques.",
-      "q3OptNo": "Non / Pas sûr",
-      "q3OptYes": "Oui, je prends une thérapie hormonale",
-      "q4Label": "Quel médicament ? (optionnel)",
-      "q4OptFinasteride": "Finastéride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutastéride (Avodart)",
-      "q4OptOther": "Autre / Pas sûr",
-      "q4Note": "Remarque : Ces médicaments peuvent abaisser le PSA d'environ 50%. Votre médecin peut avoir besoin d'ajuster la valeur PSA pour une interprétation précise."
+      "sectionTitle": "Antécédents de test PSA",
+      "q1": "Avez-vous déjà passé un test PSA ?",
+      "q1OptYes": "Oui",
+      "q1OptNo": "Non",
+      "q2": "Votre niveau de PSA était-il normal ou élevé ?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Élevé",
+      "q2OptNotSure": "Pas sûr"
     },
     "mri": {
       "sectionTitle": "Résultats IRM (Optionnel)",

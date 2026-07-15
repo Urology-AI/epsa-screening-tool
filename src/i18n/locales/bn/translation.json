@@ -766,7 +766,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA স্তর"
+        "sectionTitle": "PSA পরীক্ষার ইতিহাস"
       },
       "mri": {
         "sectionTitle": "MRI ফলাফল (ঐচ্ছিক)"
@@ -782,24 +782,14 @@
       "calculate": "ঝুঁকি মূল্যায়ন গণনা করুন ✓"
     },
     "psa": {
-      "sectionTitle": "PSA স্তর",
-      "q1": "আপনি কি আপনার PSA স্তর জানেন?",
-      "q1OptNo": "না, আমি আমার PSA জানি না",
-      "q1OptYes": "হ্যাঁ, আমি আমার PSA স্তর জানি",
-      "q2": "PSA স্তর লিখুন (ng/mL)",
-      "psaPlaceholder": "PSA স্তর (০.১-১০০)",
-      "psaInvalidValidity": "PSA স্তর ০.১ এবং ১০০ ng/mL এর মধ্যে হতে হবে",
-      "psaInvalid": "PSA স্তর ০.১ এবং ১০০ ng/mL এর মধ্যে হতে হবে",
-      "psaNote": "PSA (Prostate-Specific Antigen) হল প্রোস্টেট ক্যান্সার স্ক্রিনিং করতে ব্যবহৃত একটি রক্ত পরীক্ষা।",
-      "q3": "আপনি কি কোনো হরমোনাল ওষুধ খাচ্ছেন যা PSA প্রভাবিত করতে পারে?",
-      "q3InfoTitle": "finasteride (Propecia/Proscar), dutasteride (Avodart) বা অন্যান্য 5-alpha reductase inhibitor-এর মতো ওষুধ PSA স্তর প্রায় ৫০% কমাতে পারে।",
-      "q3OptNo": "না / নিশ্চিত নই",
-      "q3OptYes": "হ্যাঁ, আমি হরমোনাল থেরাপি নিচ্ছি",
-      "q4Label": "কোন ওষুধ? (ঐচ্ছিক)",
-      "q4OptFinasteride": "Finasteride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasteride (Avodart)",
-      "q4OptOther": "অন্যান্য / নিশ্চিত নই",
-      "q4Note": "নোট: এই ওষুধগুলি PSA প্রায় ৫০% কমাতে পারে। সঠিক ব্যাখ্যার জন্য আপনার ডাক্তারকে PSA মান সামঞ্জস্য করতে হতে পারে।"
+      "sectionTitle": "PSA পরীক্ষার ইতিহাস",
+      "q1": "আপনি কি এর আগে কখনো PSA পরীক্ষা করিয়েছেন?",
+      "q1OptYes": "হ্যাঁ",
+      "q1OptNo": "না",
+      "q2": "আপনার PSA স্তর কি স্বাভাবিক ছিল নাকি উচ্চ ছিল?",
+      "q2OptNormal": "স্বাভাবিক",
+      "q2OptElevated": "উচ্চ",
+      "q2OptNotSure": "নিশ্চিত নই"
     },
     "mri": {
       "sectionTitle": "MRI ফলাফল (ঐচ্ছিক)",

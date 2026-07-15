@@ -762,7 +762,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA Düzeyi"
+        "sectionTitle": "PSA Test Geçmişi"
       },
       "mri": {
         "sectionTitle": "MRI Sonuçları (İsteğe Bağlı)"
@@ -778,24 +778,14 @@
       "calculate": "Risk Değerlendirmesini Hesapla ✓"
     },
     "psa": {
-      "sectionTitle": "PSA Düzeyi",
-      "q1": "PSA düzeyinizi biliyor musunuz?",
-      "q1OptNo": "Hayır, PSA'mı bilmiyorum",
-      "q1OptYes": "Evet, PSA düzeyimi biliyorum",
-      "q2": "PSA Düzeyini Girin (ng/mL)",
-      "psaPlaceholder": "PSA düzeyi (0.1-100)",
-      "psaInvalidValidity": "PSA düzeyi 0.1 ile 100 ng/mL arasında olmalıdır",
-      "psaInvalid": "PSA düzeyi 0.1 ile 100 ng/mL arasında olmalıdır",
-      "psaNote": "PSA (Prostata Özgü Antijen), prostat kanseri taraması için kullanılan bir kan testidir.",
-      "q3": "PSA'yı etkileyebilecek hormonal ilaçlar kullanıyor musunuz?",
-      "q3InfoTitle": "Finasterid (Propecia/Proscar), dutasterid (Avodart) veya diğer 5-alfa redüktaz inhibitörleri gibi ilaçlar PSA düzeylerini yaklaşık %50 düşürebilir. Bu, doğru risk değerlendirmesi için önemlidir.",
-      "q3OptNo": "Hayır / Emin değilim",
-      "q3OptYes": "Evet, hormon tedavisi alıyorum",
-      "q4Label": "Hangi ilaç? (isteğe bağlı)",
-      "q4OptFinasteride": "Finasterid (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasterid (Avodart)",
-      "q4OptOther": "Diğer / Emin değilim",
-      "q4Note": "Not: Bu ilaçlar PSA'yı yaklaşık %50 düşürebilir. Doktorunuzun doğru yorumlama için PSA değerini ayarlaması gerekebilir."
+      "sectionTitle": "PSA Test Geçmişi",
+      "q1": "Daha önce PSA testi yaptırdınız mı?",
+      "q1OptYes": "Evet",
+      "q1OptNo": "Hayır",
+      "q2": "PSA düzeyiniz normal miydi yoksa yüksek miydi?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Yüksek",
+      "q2OptNotSure": "Emin değilim"
     },
     "mri": {
       "sectionTitle": "MRI Sonuçları (İsteğe Bağlı)",

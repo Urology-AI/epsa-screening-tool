@@ -762,7 +762,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "Livello PSA"
+        "sectionTitle": "Anamnesi test PSA"
       },
       "mri": {
         "sectionTitle": "Risultati MRI (Facoltativo)"
@@ -778,24 +778,14 @@
       "calculate": "Calcola Valutazione del Rischio ✓"
     },
     "psa": {
-      "sectionTitle": "Livello PSA",
-      "q1": "Conosci il tuo livello PSA?",
-      "q1OptNo": "No, non conosco il mio PSA",
-      "q1OptYes": "Sì, conosco il mio livello PSA",
-      "q2": "Inserisci il livello PSA (ng/mL)",
-      "psaPlaceholder": "Livello PSA (0,1-100)",
-      "psaInvalidValidity": "Il livello PSA deve essere compreso tra 0,1 e 100 ng/mL",
-      "psaInvalid": "Il livello PSA deve essere compreso tra 0,1 e 100 ng/mL",
-      "psaNote": "Il PSA (antigene prostatico specifico) è un esame del sangue usato per lo screening del cancro alla prostata.",
-      "q3": "Stai assumendo farmaci ormonali che potrebbero influenzare il PSA?",
-      "q3InfoTitle": "Farmaci come finasteride (Propecia/Proscar), dutasteride (Avodart) o altri inibitori della 5-alfa reduttasi possono abbassare i livelli di PSA di circa il 50%.",
-      "q3OptNo": "No / Non sono sicuro",
-      "q3OptYes": "Sì, sto seguendo una terapia ormonale",
-      "q4Label": "Quale farmaco? (facoltativo)",
-      "q4OptFinasteride": "Finasteride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasteride (Avodart)",
-      "q4OptOther": "Altro / Non sono sicuro",
-      "q4Note": "Nota: questi farmaci possono abbassare il PSA di circa il 50%. Il tuo medico potrebbe dover aggiustare il valore PSA per un'interpretazione accurata."
+      "sectionTitle": "Anamnesi test PSA",
+      "q1": "Hai mai fatto un test del PSA prima d'ora?",
+      "q1OptYes": "Sì",
+      "q1OptNo": "No",
+      "q2": "Il tuo livello di PSA era normale o elevato?",
+      "q2OptNormal": "Normale",
+      "q2OptElevated": "Elevato",
+      "q2OptNotSure": "Non sono sicuro"
     },
     "mri": {
       "sectionTitle": "Risultati MRI (Facoltativo)",
