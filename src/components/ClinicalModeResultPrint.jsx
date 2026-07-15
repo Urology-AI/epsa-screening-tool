@@ -80,10 +80,11 @@ function buildRows(formData, rawAnswers) {
     { label: 'Erectile function',   value: fmtShim(a.shim ?? f.shim?.[0]) },
     ...(f.inflammationHistory ? [{ label: 'Inflammation / prostatitis history', value: f.inflammationHistory === 1 ? 'Yes' : 'No' }] : []),
     ...(f.chemicalExposure && f.chemicalExposure !== 'no' ? [{ label: 'Chemical / occupational exposure', value: f.chemicalExposure }] : []),
+    ...(a.psaKnown ? [{ label: 'Knows PSA level', value: a.psaKnown === 'yes' ? `Yes (${a.psaValue ?? '—'} ng/mL)` : 'No' }] : []),
   ];
 }
 
-const ClinicalModeResultPrint = ({ result, formData, rawAnswers, sessionRef, onBack }) => {
+const ClinicalModeResultPrint = ({ result, postResult = null, formData, rawAnswers, sessionRef, onBack }) => {
   const printRef = useRef(null);
 
   const tierKey   = result?.epsaTierKey ?? 'intermediate';
@@ -159,6 +160,20 @@ const ClinicalModeResultPrint = ({ result, formData, rawAnswers, sessionRef, onB
             <p className="cmrp-tier-body">{result.epsaGuidelineText}</p>
           )}
         </div>
+
+        {/* Self-reported PSA + combined risk */}
+        {postResult && (
+          <div className="cmrp-tier-block" style={{ borderLeft: '4px solid #2563eb', marginTop: '0.75rem' }}>
+            <div className="cmrp-tier-eyebrow">Combined Risk (Questionnaire + PSA)</div>
+            <div className="cmrp-tier-label" style={{ color: '#1f2937', fontSize: '1rem' }}>
+              PSA: {postResult.psaValue} ng/mL{postResult.psaTier ? ` (${postResult.psaTier})` : ''} · {postResult.riskCat}
+            </div>
+            {postResult.guidelineText && <p className="cmrp-tier-body">{postResult.guidelineText}</p>}
+            {postResult.lowPsaWarningText && <p className="cmrp-tier-body"><strong>Note:</strong> {postResult.lowPsaWarningText}</p>}
+            {postResult.discordanceFlag?.text && <p className="cmrp-tier-body"><strong>Note:</strong> {postResult.discordanceFlag.text}</p>}
+            {postResult.mriRecommendMessage && <p className="cmrp-tier-body"><strong>Note:</strong> {postResult.mriRecommendMessage}</p>}
+          </div>
+        )}
 
         {/* Answers table */}
         <div className="cmrp-section-title">Submitted Answers</div>

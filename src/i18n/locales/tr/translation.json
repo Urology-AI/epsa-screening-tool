@@ -405,6 +405,16 @@
         "helper": "Kalıtsal prostat kanseri gen değişiklikleri (BRCA1/2, HOXB13, ATM veya Lynch sendromu gibi) için genetik test yaptırdınız mı? Yalnızca bir testle taşıdığınız doğrulandıysa Evet seçin. Test yapıldıysa ve hiçbir şey bulunmadıysa Hayır seçin. Hiç test yaptırmadıysanız Bilinmiyor seçin.",
         "description": "Bazı kalıtsal gen değişiklikleri prostat kanseri riskini artırır. BRCA2 daha yüksek risk ve daha agresif hastalıkla ilişkilidir. HOXB13 (özellikle G84E varyantı) bazı ailelerde görülür ve riski artırır. ATM ve Lynch sendromu genleri de riski artırır. AUA, NCCN ve EAU kılavuzları, bir testle taşıdığınız doğrulandıysa daha erken ve daha sık PSA taraması önerir."
       },
+      "psaKnown": {
+        "title": "PSA Düzeyinizi Biliyor musunuz?",
+        "helper": "Daha önce PSA kan testi yaptırdıysanız ve sonucu biliyorsanız, risk tahmininizi daha isabetli hale getirmek için aşağıya girebilirsiniz.",
+        "description": "PSA (Prostata Özgü Antijen) basit bir kan testiyle ölçülür. Bilinen bir sonucu girmek, aracın bunu diğer risk faktörlerinizle birleştirerek daha isabetli bir tahmin sunmasını sağlar."
+      },
+      "psaValue": {
+        "title": "PSA Değeri (ng/mL)",
+        "placeholder": "örn. 4,2",
+        "helper": "En son PSA test sonucunuzu, mililitre başına nanogram (ng/mL) cinsinden girin."
+      },
       "heightWeight": {
         "title": "Boy ve Kilo (BMI)",
         "description": "Fazla kilolu olmak, agresif prostat kanseri olasılığının daha yüksek olmasıyla ilişkilidir. Çok uzun boylu olmak da riski hafifçe artırabilir."

@@ -405,6 +405,16 @@
         "helper": "Selecione Sim se foi informado que você carrega uma mutação hereditária relacionada ao câncer de próstata, como BRCA2 ou HOXB13.",
         "description": "Selecione Sim se foi informado que você carrega uma mutação hereditária relacionada ao câncer de próstata, como BRCA2 ou HOXB13. Mutações BRCA2 estão associadas a maior risco de câncer de próstata e podem estar ligadas a doença mais agressiva. HOXB13, especialmente a variante G84E em algumas famílias, é um gene de suscetibilidade hereditária ao câncer de próstata."
       },
+      "psaKnown": {
+        "title": "Você sabe o seu nível de PSA?",
+        "helper": "Se você já fez um exame de sangue de PSA e sabe o resultado, pode digitá-lo abaixo para refinar sua estimativa de risco.",
+        "description": "O PSA (Antígeno Prostático Específico) é medido por um simples exame de sangue. Digitar um resultado conhecido permite que a ferramenta o combine com seus outros fatores de risco para uma estimativa mais precisa."
+      },
+      "psaValue": {
+        "title": "Valor de PSA (ng/mL)",
+        "placeholder": "ex.: 4,2",
+        "helper": "Digite o resultado do seu exame de PSA mais recente, em nanogramas por mililitro (ng/mL)."
+      },
       "heightWeight": {
         "title": "Altura e Peso (IMC)",
         "description": "A obesidade está associada a maior risco de câncer de próstata agressivo. Maior altura pode ser um pequeno fator de risco."

@@ -9,7 +9,7 @@ import ThemeSwitcher from './ThemeSwitcher.jsx';
 import TextScaleControl from './TextScaleControl.jsx';
 import { fieldReferences } from '../utils/fieldReferences';
 import { calculateDynamicEPsa } from '../utils/dynamicCalculator';
-import { DEFAULT_CALCULATOR_CONFIG } from '@epsa/engine';
+import { DEFAULT_CALCULATOR_CONFIG, calculateDynamicEPsaPost } from '@epsa/engine';
 import { FH_MAP, DIET_MAP, deriveIpssFromQol, expandShimSingle } from '../utils/epsaFormUtils';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
@@ -437,6 +437,7 @@ export default function ClinicalModeFlow() {
   const [metricW, setMetricW] = useState(false);
   const [result, setResult] = useState(restored?.result ?? null);
   const [ageError, setAgeError] = useState('');
+  const [psaError, setPsaError] = useState('');
   const [uid, setUid] = useState(null);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(null); // null = not counting
   const [sessionRef, setSessionRef] = useState(restored?.sessionRef ?? null);
@@ -550,6 +551,13 @@ export default function ClinicalModeFlow() {
     else setAgeError('');
   }
 
+  function handlePsaValueBlur() {
+    if (answers.psaValue === '' || answers.psaValue === undefined) { setPsaError(''); return; }
+    const num = parseFloat(answers.psaValue);
+    if (isNaN(num) || num < 0) setPsaError('Please enter a valid PSA value (0 or greater).');
+    else setPsaError('');
+  }
+
   async function handleSubmit() {
     if (!ready) return;
     const formData = {
@@ -578,20 +586,35 @@ export default function ClinicalModeFlow() {
       hypertension: null, hyperlipidemia: null, coronaryArteryDisease: null, diabetes: null,
     };
     const engineResult = calculateDynamicEPsa(formData, DEFAULT_CALCULATOR_CONFIG);
+
+    // If the patient knows their PSA level and entered a valid value, run it
+    // through Model 2 (post_psa pathway) so the results screen can show the
+    // combined ePSA + PSA tier, discordance flag, and MRI guidance — instead
+    // of just the pre-PSA screening estimate.
+    let postResult = null;
+    const psaNum = parseFloat(answers.psaValue);
+    if (answers.psaKnown === 'yes' && !isNaN(psaNum) && psaNum >= 0) {
+      postResult = calculateDynamicEPsaPost(
+        engineResult,
+        { psa: psaNum, pathwayMode: 'post_psa' },
+        DEFAULT_CALCULATOR_CONFIG,
+      );
+    }
+
     const ref = generateSessionRef();
     setSessionRef(ref);
-    setResult({ engineResult, formData });
+    setResult({ engineResult, formData, postResult });
     // Ask consent after results — patient has context for what they're agreeing to.
     setScreen(consented !== null ? 'result' : 'storage_consent');
-    if (consented !== null) persistSession(consented, { formData, engineResult }, ref);
+    if (consented !== null) persistSession(consented, { formData, engineResult, postResult }, ref);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /** Save the session with the patient's consent choice. Consented sessions
    *  go to Turso + REDCap; non-consented ones stay on this device only. */
-  function persistSession(didConsent, { formData, engineResult }, ref) {
+  function persistSession(didConsent, { formData, engineResult, postResult = null }, ref) {
     const localSave = uid
-      ? saveClinicalSession(uid, { formData, engineResult, sessionRef: ref, rawAnswers: answers, consented: didConsent, unitCode: unitCode || undefined }).catch(() => null)
+      ? saveClinicalSession(uid, { formData, engineResult, postResult, sessionRef: ref, rawAnswers: answers, consented: didConsent, unitCode: unitCode || undefined }).catch(() => null)
       : Promise.resolve(null);
     if (!didConsent) {
       setCloudStatus('local');
@@ -606,6 +629,7 @@ export default function ClinicalModeFlow() {
           createdAt: new Date().toISOString(),
           formData,
           engineResult,
+          postResult,
           rawAnswers: answers,
           consented: true,
           unitCode: unitCode || undefined,
@@ -636,7 +660,7 @@ export default function ClinicalModeFlow() {
 
   function handleReset() {
     clearActiveSession();
-    setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setSessionRef(null); setCloudStatus(null); setConsented(null); setUnitCode('');
+    setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setPsaError(''); setSessionRef(null); setCloudStatus(null); setConsented(null); setUnitCode('');
     i18n.changeLanguage('en');
     setScreen('welcome');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -741,6 +765,7 @@ export default function ClinicalModeFlow() {
         </div>
         <ClinicalModeResult
           result={result.engineResult}
+          postResult={result.postResult}
           answers={answers}
           formData={result.formData}
           sessionRef={sessionRef}
@@ -1012,6 +1037,35 @@ export default function ClinicalModeFlow() {
                 { value: 'unknown', label: 'Unknown' },
               ]}
             />
+          </QCard>
+
+          {/* Known PSA level — optional numeric entry that refines the estimate */}
+          <QCard num="+" label={t('part1.fields.psaKnown.title')}
+            sublabel={t('part1.fields.psaKnown.helper')}
+            answered={answers.psaKnown !== undefined} qid="psaKnown">
+            <Chips ariaLabel={t('part1.fields.psaKnown.title')} value={answers.psaKnown ?? ''} onChange={(v) => { set('psaKnown', v); if (v !== 'yes') { set('psaValue', ''); setPsaError(''); } }}
+              options={[
+                { value: 'yes', label: t('part1.options.yes') },
+                { value: 'no',  label: t('part1.options.no') },
+              ]}
+            />
+            {answers.psaKnown === 'yes' && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <label className="qef-sublabel" htmlFor="qef-psa-value" style={{ display: 'block', marginBottom: '0.35rem' }}>
+                  {t('part1.fields.psaValue.title')}
+                </label>
+                <input
+                  id="qef-psa-value"
+                  className={`qef-input${psaError ? ' qef-input--error' : ''}`}
+                  type="number" min={0} step="0.01"
+                  placeholder={t('part1.fields.psaValue.placeholder')}
+                  value={answers.psaValue ?? ''}
+                  onChange={(e) => { set('psaValue', e.target.value); setPsaError(''); }}
+                  onBlur={handlePsaValueBlur}
+                />
+                {psaError && <p className="qef-field-error">{psaError}</p>}
+              </div>
+            )}
           </QCard>
         </div>
 

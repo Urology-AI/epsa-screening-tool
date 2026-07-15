@@ -34,7 +34,7 @@ function downloadJson(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-export default function ClinicalModeResult({ result, answers, formData, onEditAnswers, onStartOver, onContinue, onStudyConsent, onConsentNow, readOnly = false, sessionRef, cloudStatus = null, consented = null }) {
+export default function ClinicalModeResult({ result, postResult = null, answers, formData, onEditAnswers, onStartOver, onContinue, onStudyConsent, onConsentNow, readOnly = false, sessionRef, cloudStatus = null, consented = null }) {
   const [showAll, setShowAll] = useState(false);
   const [showPrintForm, setShowPrintForm] = useState(false);
   const [showResultPrint, setShowResultPrint] = useState(false);
@@ -60,6 +60,7 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
     return (
       <ClinicalModeResultPrint
         result={result}
+        postResult={postResult}
         formData={formData}
         rawAnswers={answers}
         sessionRef={sessionRef}
@@ -195,6 +196,54 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
         <p className="qer-guideline-body">{guidelineText}</p>
       </div>
 
+      {/* ── Self-reported PSA + combined risk (if the patient entered a known PSA value) ── */}
+      {postResult && (
+        <div className="qer-section">
+          <div className="qer-section-title">
+            <TrendingUpIcon size={13} aria-hidden="true" />
+            Your Reported PSA
+          </div>
+          <div className="qer-factor-list">
+            <div className="qer-factor qer-factor--elevated">
+              <div className="qer-factor-left">
+                <span className="qer-factor-name">PSA level</span>
+                <span className="qer-source-tag qer-source-tag--model">Self-reported</span>
+              </div>
+              <span className="qer-factor-val">
+                {postResult.psaValue} ng/mL{postResult.psaTier ? ` (${postResult.psaTier})` : ''}
+              </span>
+            </div>
+          </div>
+
+          <div className={`qer-guideline-banner qer-guideline-banner--${postResult.epsaTierKey === 'high' || postResult.epsaTierKey === 'intermediate-high' ? 'high' : postResult.epsaTierKey === 'low' ? 'low' : 'moderate'}`}
+            style={{ marginTop: '0.75rem' }}>
+            <div className="qer-guideline-eyebrow">Combined Risk (Questionnaire + PSA)</div>
+            <p className="qer-guideline-body"><strong>{postResult.riskCat}</strong> — {postResult.guidelineText}</p>
+          </div>
+
+          {postResult.lowPsaWarning && (
+            <div className="qer-guideline-banner qer-guideline-banner--high" style={{ marginTop: '0.75rem' }}>
+              <div className="qer-guideline-eyebrow">Important — Low PSA Does Not Rule Out Risk</div>
+              <p className="qer-guideline-body">{postResult.lowPsaWarningText}</p>
+            </div>
+          )}
+
+          {postResult.discordanceFlag && (
+            <div className={`qer-guideline-banner qer-guideline-banner--${postResult.discordanceFlag.severity === 'orange' ? 'high' : 'moderate'}`} style={{ marginTop: '0.75rem' }}>
+              <div className="qer-guideline-eyebrow">Discordance Notice</div>
+              <p className="qer-guideline-body">{postResult.discordanceFlag.text}</p>
+            </div>
+          )}
+
+          {postResult.mriRecommended && (
+            <div className="qer-guideline-banner qer-guideline-banner--moderate" style={{ marginTop: '0.75rem' }}>
+              <div className="qer-guideline-eyebrow">mpMRI Recommended</div>
+              <p className="qer-guideline-body">{postResult.mriRecommendMessage}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Factors ordered by impact, no points shown ── */}
       {sorted.length > 0 && (
         <div className="qer-section">
@@ -263,7 +312,7 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
             type="button"
             className="qer-action-btn qer-action-btn--secondary"
             onClick={() => downloadJson(
-              { sessionRef, formData, result, rawAnswers: answers, exportedAt: new Date().toISOString() },
+              { sessionRef, formData, result, postResult, rawAnswers: answers, exportedAt: new Date().toISOString() },
               `epsa-results-${sessionRef || Date.now()}.json`
             )}
           >

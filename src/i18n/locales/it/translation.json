@@ -405,6 +405,16 @@
         "helper": "Seleziona Sì se ti è stato detto che sei portatore di una mutazione ereditaria correlata al cancro alla prostata, come BRCA2 o HOXB13.",
         "description": "Seleziona Sì se ti è stato detto che sei portatore di una mutazione ereditaria correlata al cancro alla prostata, come BRCA2 o HOXB13. Le mutazioni BRCA2 sono associate a un rischio aumentato di cancro alla prostata."
       },
+      "psaKnown": {
+        "title": "Conosci il tuo livello di PSA?",
+        "helper": "Se hai già fatto un'analisi del sangue per il PSA e conosci il risultato, puoi inserirlo qui sotto per affinare la tua stima di rischio.",
+        "description": "Il PSA (Antigene Prostatico Specifico) si misura con un semplice esame del sangue. Inserire un risultato noto permette allo strumento di combinarlo con gli altri tuoi fattori di rischio per una stima più precisa."
+      },
+      "psaValue": {
+        "title": "Valore di PSA (ng/mL)",
+        "placeholder": "es. 4,2",
+        "helper": "Inserisci il risultato del tuo più recente esame del PSA, in nanogrammi per millilitro (ng/mL)."
+      },
       "heightWeight": {
         "title": "Altezza e peso (BMI)",
         "description": "L'obesità è associata a un rischio aumentato di cancro alla prostata aggressivo."

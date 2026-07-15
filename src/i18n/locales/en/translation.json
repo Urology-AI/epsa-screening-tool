@@ -411,6 +411,16 @@
         "helper": "Have you had a genetic test for hereditary prostate cancer gene changes (like BRCA1/2, HOXB13, ATM, or Lynch syndrome)? Pick Yes only if a test confirmed you carry one. Pick No if you were tested and nothing was found. Pick Unknown if you've never been tested.",
         "description": "Some inherited gene changes raise prostate cancer risk. BRCA2 is linked to higher risk and more aggressive disease. HOXB13 (especially the G84E version) runs in some families and also raises risk. ATM and Lynch-syndrome genes also raise risk. AUA, NCCN, and EAU guidelines recommend earlier and more frequent PSA screening if a test has confirmed you carry one."
       },
+      "psaKnown": {
+        "title": "Do You Know Your PSA Level?",
+        "helper": "If you've had a PSA blood test before and know the result, you can enter it below to refine your risk estimate.",
+        "description": "PSA (Prostate-Specific Antigen) is measured with a simple blood test. Entering a known result lets the tool combine it with your other risk factors for a more precise estimate."
+      },
+      "psaValue": {
+        "title": "PSA Value (ng/mL)",
+        "placeholder": "e.g. 4.2",
+        "helper": "Enter your most recent PSA test result, in nanograms per milliliter (ng/mL)."
+      },
       "heightWeight": {
         "title": "Height & Weight (BMI)",
         "description": "Carrying extra weight is linked to a higher chance of aggressive prostate cancer. Being very tall may also slightly increase risk."

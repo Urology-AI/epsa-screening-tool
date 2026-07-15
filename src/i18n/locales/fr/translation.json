@@ -405,6 +405,16 @@
         "helper": "Sélectionnez Oui si on vous a dit que vous portez une mutation héréditaire liée au cancer de la prostate, comme BRCA2 ou HOXB13.",
         "description": "Sélectionnez Oui si on vous a dit que vous portez une mutation héréditaire liée au cancer de la prostate, comme BRCA2 ou HOXB13. Les mutations BRCA2 sont associées à un risque accru de cancer de la prostate et peuvent être liées à une maladie plus agressive. HOXB13, en particulier la variante G84E dans certaines familles, est un gène de susceptibilité héréditaire au cancer de la prostate."
       },
+      "psaKnown": {
+        "title": "Connaissez-vous votre taux de PSA ?",
+        "helper": "Si vous avez déjà fait une prise de sang pour le PSA et que vous connaissez le résultat, vous pouvez le saisir ci-dessous pour affiner votre estimation de risque.",
+        "description": "Le PSA (Antigène Spécifique de la Prostate) se mesure par une simple prise de sang. Saisir un résultat connu permet à l'outil de le combiner avec vos autres facteurs de risque pour une estimation plus précise."
+      },
+      "psaValue": {
+        "title": "Valeur du PSA (ng/mL)",
+        "placeholder": "ex. 4,2",
+        "helper": "Saisissez le résultat de votre dernier test de PSA, en nanogrammes par millilitre (ng/mL)."
+      },
       "heightWeight": {
         "title": "Taille et poids (IMC)",
         "description": "L'obésité est associée à un risque accru de cancer de la prostate agressif. Une taille plus grande peut être un léger facteur de risque."
