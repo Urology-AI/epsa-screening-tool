@@ -536,13 +536,13 @@
       "toggleShort": "Kısa sürümü kullan (tek şiddet sorusu)",
       "toggleFull": "Tam SHIM'i kullan (5 soru)",
       "skip": "Atla — ereksiyon sorunu yok",
-      "singleQuestionLabel": "Genel olarak, son 6 aydaki ereksiyon işlevinizi nasıl tanımlarsınız?",
+      "singleQuestionLabel": "Son 6 ayda, ereksiyon olma yeteneğinizi nasıl tanımlarsınız?",
       "options": {
-        "none": "Ereksiyon sorunu yok",
-        "mild": "Hafif ED",
-        "mildModerate": "Hafif–Orta ED",
-        "moderate": "Orta ED",
-        "severe": "Şiddetli ED"
+        "none": "Sorun yok — kolayca sağlandı",
+        "mild": "Kolayca sağlandı, ara sıra hafif zorlukla",
+        "mildModerate": "Sağlandı, ama biraz zorlukla",
+        "moderate": "Önemli zorlukla sağlandı",
+        "severe": "Nadiren veya hiç ereksiyon sağlanamadı"
       }
     },
     "abnormalPsaLikelihood": "Anormal PSA / csPCa tahmini olasılığı:",

@@ -536,13 +536,13 @@
       "toggleShort": "Usar versão curta (uma única pergunta de gravidade)",
       "toggleFull": "Usar SHIM completo (5 perguntas)",
       "skip": "Pular — sem queixas eréteis",
-      "singleQuestionLabel": "No geral, como você descreveria sua função erétil nos últimos 6 meses?",
+      "singleQuestionLabel": "Nos últimos 6 meses, como você descreveria sua capacidade de ter uma ereção?",
       "options": {
-        "none": "Sem disfunção erétil",
-        "mild": "ED leve",
-        "mildModerate": "ED leve–moderada",
-        "moderate": "ED moderada",
-        "severe": "ED grave"
+        "none": "Nenhum problema — obtida facilmente",
+        "mild": "Obtida facilmente, com alguma dificuldade ocasional",
+        "mildModerate": "Obtida, mas com alguma dificuldade",
+        "moderate": "Obtida com dificuldade significativa",
+        "severe": "Raramente ou nunca capaz de ter uma ereção"
       }
     },
     "abnormalPsaLikelihood": "Probabilidade estimada de PSA alterado / csPCa:",

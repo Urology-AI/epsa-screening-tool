@@ -540,14 +540,14 @@
     "shimShort": {
       "toggleShort": "Use short version (single severity question)",
       "toggleFull": "Use full SHIM (5 questions)",
-      "skip": "Skip — no erectile concerns",
-      "singleQuestionLabel": "Overall, how would you describe your erectile function over the past 6 months?",
+      "skip": "Skip — no erection concerns",
+      "singleQuestionLabel": "Over the past 6 months, how would you describe your ability to achieve an erection?",
       "options": {
-        "none": "No erectile dysfunction",
-        "mild": "Mild ED",
-        "mildModerate": "Mild–Moderate ED",
-        "moderate": "Moderate ED",
-        "severe": "Severe ED"
+        "none": "No problems — achieved easily",
+        "mild": "Achieved easily, with slight difficulty at times",
+        "mildModerate": "Achieved, but with some difficulty",
+        "moderate": "Achieved with significant difficulty",
+        "severe": "Rarely or never able to achieve an erection"
       }
     },
     "abnormalPsaLikelihood": "Estimated likelihood of an abnormal PSA / csPCa:",

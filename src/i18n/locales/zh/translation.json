@@ -536,13 +536,13 @@
       "toggleShort": "使用简短版（单一严重程度问题）",
       "toggleFull": "使用完整 SHIM（5 个问题）",
       "skip": "跳过——无勃起方面困扰",
-      "singleQuestionLabel": "总体而言，您如何描述过去 6 个月的勃起功能？",
+      "singleQuestionLabel": "在过去 6 个月中，您如何描述自己获得勃起的能力？",
       "options": {
-        "none": "无勃起功能障碍",
-        "mild": "轻度 ED",
-        "mildModerate": "轻至中度 ED",
-        "moderate": "中度 ED",
-        "severe": "重度 ED"
+        "none": "没有问题——容易达到",
+        "mild": "容易达到，偶尔有轻微困难",
+        "mildModerate": "能够达到，但有些困难",
+        "moderate": "达到时有明显困难",
+        "severe": "很少或从未能够达到勃起"
       }
     },
     "abnormalPsaLikelihood": "PSA 异常 / csPCa 的估计可能性：",
