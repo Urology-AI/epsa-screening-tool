@@ -270,9 +270,9 @@ export default function StaffDataEntry() {
               <td>
                 <select className="sde-select" value={form.exercise} onChange={e => set('exercise', e.target.value)}>
                   <option value="">Select…</option>
-                  <option value="0">Regular</option>
-                  <option value="1">Some</option>
-                  <option value="2">None</option>
+                  <option value="0">Regular (3+ days/week, 1+ hour)</option>
+                  <option value="1">Moderate (1-2 days/week, 1+ hour)</option>
+                  <option value="2">Sedentary (rarely or never)</option>
                 </select>
               </td>
             </tr>

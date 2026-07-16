@@ -642,9 +642,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "Düzenli (haftada 3+ gün)",
-        "some": "Biraz (haftada 1-2 gün)",
-        "none": "Hiç"
+        "regular": "Düzenli (haftada 3+ gün, ≥1 saat)",
+        "some": "Orta düzey (haftada 1-2 gün, ≥1 saat)",
+        "none": "Hareketsiz (nadiren veya hiç)"
       },
       "smoking": {
         "current": "Hâlâ içiyor",
@@ -1247,9 +1247,9 @@
     "defaultsHint": "Kullanılıyor: Sigara = Hiç içmedi, Beslenme = Düzenli (Batı), Kimyasal maruziyet = Hayır, Genetik mutasyon = Hayır, İltihaplanma = Hayır, Eşlik eden hastalıklar = Yok, Egzersiz = Düzenli.",
     "exerciseLabel": "Egzersiz düzeyi",
     "exercise": {
-      "regular": "Düzenli (haftada 3+ gün)",
-      "some": "Biraz (haftada 1-2 gün)",
-      "none": "Hiç"
+      "regular": "Düzenli (haftada 3+ gün, ≥1 saat)",
+      "some": "Orta düzey (haftada 1-2 gün, ≥1 saat)",
+      "none": "Hareketsiz (nadiren veya hiç)"
     },
     "comorbiditiesLabel": "Eşlik eden hastalıklar",
     "comorbidities": {

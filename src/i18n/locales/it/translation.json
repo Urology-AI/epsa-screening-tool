@@ -585,9 +585,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "Regolare (3+ giorni/settimana)",
-        "some": "Qualche (1-2 giorni/settimana)",
-        "none": "Nessuna"
+        "regular": "Regolare (3+ giorni/settimana, ≥1 ora)",
+        "some": "Moderata (1-2 giorni/settimana, ≥1 ora)",
+        "none": "Sedentaria (raramente o mai)"
       },
       "smoking": {
         "current": "Fumatore attuale",
@@ -1235,9 +1235,9 @@
     "defaultsHint": "Uso: Fumo = Mai, Dieta = Normale (occidentale), Esposizione chimica = No, Mutazione genetica = No, Infiammazione = No, Comorbidità = Nessuna, Esercizio = Regolare.",
     "exerciseLabel": "Livello di attività fisica",
     "exercise": {
-      "regular": "Regolare (3+ giorni/settimana)",
-      "some": "Qualche (1-2 giorni/settimana)",
-      "none": "Nessuna"
+      "regular": "Regolare (3+ giorni/settimana, ≥1 ora)",
+      "some": "Moderata (1-2 giorni/settimana, ≥1 ora)",
+      "none": "Sedentaria (raramente o mai)"
     },
     "comorbiditiesLabel": "Comorbidità",
     "comorbidities": {

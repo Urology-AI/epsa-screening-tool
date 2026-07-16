@@ -377,9 +377,9 @@ export async function generateClinicalFormPdf() {
   ry = sectionLabel(COL_R, ry, 'Lifestyle');
 
   ry = question(COL_R, ry, 7, 'Exercise frequency', [
-    'Regular (≥ 3×/week)',
-    'Some (1 – 2×/week)',
-    'Little or none',
+    'Regular (3+ days/week, 1+ hour)',
+    'Moderate (1-2 days/week, 1+ hour)',
+    'Sedentary (rarely or never)',
   ]);
 
   ry = question(COL_R, ry, 8, 'Smoking history', [
