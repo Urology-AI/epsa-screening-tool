@@ -533,7 +533,9 @@ export default function ClinicalModeFlow() {
     return {
       age:           !!(age && age >= 18 && age <= 99),
       race:          !!answers.race,
-      familyHistory: answers.familyHistory !== undefined && answers.familyHistory !== null && answers.familyHistory !== '',
+      familyHistory: answers.familyHistory !== undefined && answers.familyHistory !== null && answers.familyHistory !== ''
+        && answers.familyHistoryBreastCancer !== undefined && answers.familyHistoryBreastCancer !== null && answers.familyHistoryBreastCancer !== ''
+        && answers.familyHistoryPancreaticCancer !== undefined && answers.familyHistoryPancreaticCancer !== null && answers.familyHistoryPancreaticCancer !== '',
       qol:           answers.qol !== undefined && answers.qol !== null && answers.qol !== '',
       height:        heightOk,
       weight:        weightOk,
@@ -581,11 +583,23 @@ export default function ClinicalModeFlow() {
 
   async function handleSubmit() {
     if (!ready) return;
+    // BRCA1/2 germline mutations are also the driver behind hereditary breast and
+    // pancreatic cancer syndromes. A reported family history of either — without a
+    // confirmed negative or positive genetic test — is treated as an elevated,
+    // BRCA-associated risk signal (same scoring bucket the engine already uses for
+    // "other_elevated" hereditary findings), per AUA/NCCN guidance on hereditary risk.
+    const hasBrcaLinkedFamilyHistory = answers.familyHistoryBreastCancer === 'yes'
+      || answers.familyHistoryPancreaticCancer === 'yes';
+    const effectiveBrcaStatus = (answers.brca === 'yes' || answers.brca === 'no')
+      ? answers.brca
+      : (hasBrcaLinkedFamilyHistory ? 'other_elevated' : answers.brca);
     const formData = {
       age: parseInt(answers.age),
       race: answers.race,
       ethnicity: answers.ethnicity || null,
       familyHistory: FH_MAP[answers.familyHistory] ?? 0,
+      familyHistoryBreastCancer: answers.familyHistoryBreastCancer ?? 'unknown',
+      familyHistoryPancreaticCancer: answers.familyHistoryPancreaticCancer ?? 'unknown',
       ipss: deriveIpssFromQol(answers.qol),
       ipssQol: answers.qol,
       shim: expandShimSingle(answers.shim),
@@ -600,7 +614,7 @@ export default function ClinicalModeFlow() {
       weightKg: answers.weightKg,
       metricH,
       metricW,
-      brcaStatus: answers.brca,
+      brcaStatus: effectiveBrcaStatus,
       inflammationHistory: answers.inflammation === 'yes' ? 1 : 0,
       chemicalExposure: answers.chemicalExposure ?? 'no',
       comorbidityScore: Number(answers.comorbidities) || 0,
@@ -885,6 +899,28 @@ export default function ClinicalModeFlow() {
               { value: 'one',      label: t('quickEntry.family.one') },
               { value: 'two_plus', label: t('quickEntry.family.twoPlus') },
               { value: 'unknown',  label: t('part1.options.unknown') },
+            ]}
+          />
+
+          {/* Family history of BRCA-linked cancers (breast, pancreatic) — hereditary
+              cancer syndromes that also raise prostate cancer risk. */}
+          <p className="qef-sublabel qef-sublabel--nested">{t('part1.fields.familyHistoryBreastCancer.helper')}</p>
+          <Chips ariaLabel={t('part1.fields.familyHistoryBreastCancer.title')}
+            value={answers.familyHistoryBreastCancer ?? ''} onChange={(v) => set('familyHistoryBreastCancer', v)}
+            options={[
+              { value: 'no',      label: t('part1.options.no') },
+              { value: 'yes',     label: t('part1.options.yes') },
+              { value: 'unknown', label: t('part1.options.unknown') },
+            ]}
+          />
+
+          <p className="qef-sublabel qef-sublabel--nested">{t('part1.fields.familyHistoryPancreaticCancer.helper')}</p>
+          <Chips ariaLabel={t('part1.fields.familyHistoryPancreaticCancer.title')}
+            value={answers.familyHistoryPancreaticCancer ?? ''} onChange={(v) => set('familyHistoryPancreaticCancer', v)}
+            options={[
+              { value: 'no',      label: t('part1.options.no') },
+              { value: 'yes',     label: t('part1.options.yes') },
+              { value: 'unknown', label: t('part1.options.unknown') },
             ]}
           />
         </QCard>

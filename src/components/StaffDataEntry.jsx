@@ -11,6 +11,8 @@ const EMPTY = {
   ipssQol: '',
   shimTotal: '',
   familyHistory: '',
+  familyHistoryBreastCancer: '',
+  familyHistoryPancreaticCancer: '',
   exercise: '',
   smoking: '',
   brcaStatus: '',
@@ -62,6 +64,14 @@ function buildFormData(f) {
     'unknown': 'unknown',
   };
 
+  // Confirmed BRCA test result (yes/no) takes precedence; otherwise a reported
+  // family history of breast or pancreatic cancer (BRCA-linked syndromes) is
+  // treated as an elevated hereditary risk signal, matching ClinicalModeFlow.
+  const hasBrcaLinkedFamilyHistory = f.familyHistoryBreastCancer === 'yes' || f.familyHistoryPancreaticCancer === 'yes';
+  const effectiveBrcaStatus = (f.brcaStatus === 'yes' || f.brcaStatus === 'no')
+    ? f.brcaStatus
+    : (hasBrcaLinkedFamilyHistory ? 'other_elevated' : (f.brcaStatus || undefined));
+
   return {
     age: f.age === '' ? undefined : Number(f.age),
     race: (RACE_VALUE_MAP[f.race] ?? f.race) || undefined,
@@ -71,9 +81,11 @@ function buildFormData(f) {
     ipssQol: f.ipssQol === '' ? undefined : Number(f.ipssQol),
     shim: distribute(shimTotalNum, 5, 5),
     familyHistory: FH_MAP[f.familyHistory] ?? undefined,
+    familyHistoryBreastCancer: f.familyHistoryBreastCancer || undefined,
+    familyHistoryPancreaticCancer: f.familyHistoryPancreaticCancer || undefined,
     exercise: f.exercise === '' ? undefined : Number(f.exercise),
     smoking: f.smoking === '' ? undefined : Number(f.smoking),
-    brcaStatus: f.brcaStatus || undefined,
+    brcaStatus: effectiveBrcaStatus,
     chemicalExposure: f.chemicalExposure || 'no',
     dietPattern: 'other',
     comorbidityScore: 0,
@@ -261,6 +273,28 @@ export default function StaffDataEntry() {
                   <option value="0">None</option>
                   <option value="1">1st degree</option>
                   <option value="2">2nd degree</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td className="sde-label">Family History of Breast Cancer</td>
+              <td>
+                <select className="sde-select" value={form.familyHistoryBreastCancer} onChange={e => set('familyHistoryBreastCancer', e.target.value)}>
+                  <option value="">Select…</option>
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td className="sde-label">Family History of Pancreatic Cancer</td>
+              <td>
+                <select className="sde-select" value={form.familyHistoryPancreaticCancer} onChange={e => set('familyHistoryPancreaticCancer', e.target.value)}>
+                  <option value="">Select…</option>
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
                   <option value="unknown">Unknown</option>
                 </select>
               </td>

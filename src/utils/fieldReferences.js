@@ -64,6 +64,28 @@ export const fieldReferences = {
       { name: 'Madersbacher S, et al., BJU Int. 2010', url: pubmedSearch('Madersbacher S BJU Int 2010') },
     ],
   },
+  familyHistoryBreastCancer: {
+    titleKey: 'part1.fields.familyHistoryBreastCancer.title',
+    descriptionKey: 'part1.fields.familyHistoryBreastCancer.description',
+    isGuideline: true,
+    sources: [
+      auaScreeningGuideline,
+      nccnScreeningGuideline,
+      { name: 'Giri VN, et al., J Clin Oncol. 2018', url: pubmedSearch('Giri VN J Clin Oncol 2018') },
+      { name: 'Nyberg T, et al., Br J Cancer. 2022 — BRCA1/2 meta-analysis', url: 'https://pubmed.ncbi.nlm.nih.gov/34963702/' },
+    ],
+  },
+  familyHistoryPancreaticCancer: {
+    titleKey: 'part1.fields.familyHistoryPancreaticCancer.title',
+    descriptionKey: 'part1.fields.familyHistoryPancreaticCancer.description',
+    isGuideline: true,
+    sources: [
+      auaScreeningGuideline,
+      nccnScreeningGuideline,
+      { name: 'Giri VN, et al., J Clin Oncol. 2018', url: pubmedSearch('Giri VN J Clin Oncol 2018') },
+      { name: 'Nyberg T, et al., Br J Cancer. 2022 — BRCA1/2 meta-analysis', url: 'https://pubmed.ncbi.nlm.nih.gov/34963702/' },
+    ],
+  },
   inflammationHistory: {
     titleKey: 'part1.fields.inflammationHistory.title',
     descriptionKey: 'part1.fields.inflammationHistory.description',
