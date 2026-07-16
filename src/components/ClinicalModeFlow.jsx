@@ -37,20 +37,6 @@ function deriveBmi(a, mH, mW) {
   const lbs = mW ? (parseFloat(a.weightKg) || 0) * 2.20462 : parseFloat(a.weightLbs);
   return inches && lbs ? (703 * lbs) / (inches * inches) : null;
 }
-function deriveIpss(qol) {
-  // Maps IPSS Quality of Life question (0–6) to a 7-item IPSS array.
-  // Mapping calibrated against Barry et al. (J Urol 1992) median IPSS by QoL response:
-  //   QoL 0–1 (Delighted/Pleased)        → total 0  (mild,     IPSS 0–7)
-  //   QoL 2   (Mostly Satisfied)          → total 7  (mild,     IPSS 0–7)
-  //   QoL 3   (Mixed)                     → total 14 (moderate, IPSS 8–19)
-  //   QoL 4   (Mostly Dissatisfied)       → total 21 (moderate-severe boundary)
-  //   QoL 5–6 (Unhappy/Terrible)          → total 35 (severe,   IPSS 20–35)
-  if (qol <= 1) return [0, 0, 0, 0, 0, 0, 0];   // total 0  — mild
-  if (qol === 2) return [1, 1, 1, 1, 1, 1, 1];   // total 7  — mild
-  if (qol === 3) return [2, 2, 2, 2, 2, 2, 2];   // total 14 — moderate
-  if (qol === 4) return [3, 3, 3, 3, 3, 3, 3];   // total 21 — moderate-severe
-  return [5, 5, 5, 5, 5, 5, 5];                  // total 35 — severe
-}
 
 /* ─── Chip group ─── */
 const Chips = ({ options, value, onChange, ariaLabel }) => (
