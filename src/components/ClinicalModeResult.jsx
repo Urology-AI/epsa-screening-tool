@@ -18,12 +18,6 @@ function mapRawToGauge(raw, max, fallback) {
   return Math.round(67 + ((c - 18) / Math.max(1, max - 18)) * 33);
 }
 
-const CATEGORIES = [
-  { key: 'low',          label: 'Low — Routine Screening',              color: '#16a34a' },
-  { key: 'intermediate', label: 'Intermediate — Consider PSA Discussion', color: '#2563eb' },
-  { key: 'elevated',     label: 'Strong Candidate for PSA Testing',      color: '#d97706' },
-];
-
 function downloadJson(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -190,20 +184,16 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
         </div>
       )}
 
-      {/* ── Gauge + categories ── */}
+      {/* ── Gauge ──
+          The gauge's own tier legend (inside RiskGauge) already shows the
+          three plain-language priority levels with the active one
+          highlighted, so we don't repeat a second "categories" legend here —
+          that used to duplicate the same three tiers in different wording
+          right below the gauge. */}
       <div className="qer-gauge-section">
+        <h2 className="qer-results-heading">Your Results</h2>
+        <p className="qer-results-subheading">Here's what your answers suggest about PSA testing for you.</p>
         <RiskGauge score={gaugeScore} tierKey={epsaTierKey} tierLabel={epsaTierLabel} />
-        <div className="qer-categories">
-          {CATEGORIES.map(({ key, label, color }) => (
-            <div key={key}
-              className={`qer-cat${epsaTierKey === key ? ' qer-cat--active' : ''}`}
-              style={epsaTierKey === key ? { borderColor: color, color } : {}}
-            >
-              <span className="qer-cat-dot" style={{ background: color }} />
-              {label}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── Guideline recommendation ── */}
@@ -286,7 +276,7 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
         <div className="qer-section">
           <div className="qer-section-title">
             <TrendingUpIcon size={13} aria-hidden="true" />
-            Risk factors — sorted by impact
+            What's affecting your results
           </div>
           <div className="qer-factor-list">
             {visible.map((f) => {

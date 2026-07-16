@@ -126,42 +126,86 @@
   background: var(--surface, #fff);
   border: 1px solid var(--line-200);
   border-radius: var(--radius-md, 0.75rem);
-  padding: 1rem 1rem 1.25rem;
+  padding: 1.25rem 1rem 1.5rem;
   text-align: center;
 }
 
-.qer-categories {
+/* ── Risk gauge (semicircle dial) ──
+   Previously these classes had no CSS at all — the SVG rendered at a fixed
+   pixel size with no responsive scaling, and the tier legend/caption were
+   unstyled inline text with no visual hierarchy. This block gives the gauge
+   a clear focal point (the badge), a legible legend, and mobile scaling. */
+.risk-gauge-figure {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 22rem;
+}
+
+.risk-gauge-svg {
+  width: 100%;
+  max-width: 19rem;
+  height: auto;
+  display: block;
+}
+
+.risk-gauge-badge {
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1.5px solid;
+  border-radius: 999px;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+.risk-gauge-labels {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin: 0.5rem 0 0.875rem;
-}
-
-.qer-cat {
-  display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.3125rem 0.75rem;
-  border-radius: 999px;
-  border: 1px solid var(--line-200);
-  background: var(--surface-subtle);
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.risk-gauge-range-pill {
   font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--ink-600);
-  transition: all 0.2s;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  border: 1.5px solid;
+  white-space: nowrap;
 }
 
-.qer-cat--active {
+.risk-gauge-range-pill--active {
   font-weight: 800;
-  background: var(--surface);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 
-.qer-cat-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  flex-shrink: 0;
+@keyframes risk-gauge-ripple {
+  0%   { r: 9;  opacity: 0.9; }
+  100% { r: 22; opacity: 0; }
+}
+
+@media (max-width: 420px) {
+  .risk-gauge-badge { font-size: 0.9375rem; padding: 0.4rem 0.9rem; }
+  .risk-gauge-range-pill { font-size: 0.625rem; padding: 0.2rem 0.5rem; }
+}
+
+.qer-results-heading {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--ms-navy, #212070);
+}
+.theme-dark .qer-results-heading { color: var(--ink-900); }
+
+.qer-results-subheading {
+  margin: 0.2rem 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--ink-600);
 }
 
 .qer-guideline-text {

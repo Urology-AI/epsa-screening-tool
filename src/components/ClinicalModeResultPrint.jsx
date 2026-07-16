@@ -4,16 +4,18 @@ import jsPDF from 'jspdf';
 import './PrintableForm.css';
 import './ClinicalModeResultPrint.css';
 
+// Matches the on-screen results palette (green/amber/red) for consistency
+// between the live view and the printed/PDF copy.
 const TIER_COLORS = {
-  low:          '#16a34a',
-  intermediate: '#2563eb',
-  elevated:     '#d97706',
+  low:          '#1b7a4a',
+  intermediate: '#b45309',
+  elevated:     '#c0392b',
 };
 
 const TIER_LABELS = {
-  low:          'Low — Routine Screening',
-  intermediate: 'Intermediate — Consider PSA Discussion',
-  elevated:     'Strong Candidate for PSA Testing',
+  low:          'Lower Priority — Routine Screening',
+  intermediate: 'Worth Discussing With Your Doctor',
+  elevated:     'Strongly Consider Testing Soon',
 };
 
 function fmtRace(v) {
