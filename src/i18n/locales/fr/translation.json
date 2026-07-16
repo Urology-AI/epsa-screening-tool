@@ -405,6 +405,16 @@
         "helper": "Sélectionnez Oui si on vous a dit que vous portez une mutation héréditaire liée au cancer de la prostate, comme BRCA2 ou HOXB13.",
         "description": "Sélectionnez Oui si on vous a dit que vous portez une mutation héréditaire liée au cancer de la prostate, comme BRCA2 ou HOXB13. Les mutations BRCA2 sont associées à un risque accru de cancer de la prostate et peuvent être liées à une maladie plus agressive. HOXB13, en particulier la variante G84E dans certaines familles, est un gène de susceptibilité héréditaire au cancer de la prostate."
       },
+      "psaKnown": {
+        "title": "Connaissez-vous votre taux de PSA ?",
+        "helper": "Si vous avez déjà fait une prise de sang pour le PSA et que vous connaissez le résultat, vous pouvez le saisir ci-dessous pour affiner votre estimation de risque.",
+        "description": "Le PSA (Antigène Spécifique de la Prostate) se mesure par une simple prise de sang. Saisir un résultat connu permet à l'outil de le combiner avec vos autres facteurs de risque pour une estimation plus précise."
+      },
+      "psaValue": {
+        "title": "Valeur du PSA (ng/mL)",
+        "placeholder": "ex. 4,2",
+        "helper": "Saisissez le résultat de votre dernier test de PSA, en nanogrammes par millilitre (ng/mL)."
+      },
       "heightWeight": {
         "title": "Taille et poids (IMC)",
         "description": "L'obésité est associée à un risque accru de cancer de la prostate agressif. Une taille plus grande peut être un léger facteur de risque."
@@ -575,9 +585,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "Régulier (3+ jours/semaine)",
-        "some": "Quelque peu (1-2 jours/semaine)",
-        "none": "Aucun"
+        "regular": "Régulier (3+ jours/semaine, ≥1 heure)",
+        "some": "Modéré (1-2 jours/semaine, ≥1 heure)",
+        "none": "Sédentaire (rarement ou jamais)"
       },
       "smoking": {
         "current": "Actuel",
@@ -724,13 +734,13 @@
       "toggleShort": "Utiliser la version courte (une seule question de sévérité)",
       "toggleFull": "Utiliser le SHIM complet (5 questions)",
       "skip": "Passer — aucune préoccupation érectile",
-      "singleQuestionLabel": "Dans l'ensemble, comment décririez-vous votre fonction érectile au cours des 6 derniers mois ?",
+      "singleQuestionLabel": "Au cours des 6 derniers mois, comment décririez-vous votre capacité à obtenir une érection ?",
       "options": {
-        "none": "Aucune dysfonction érectile",
-        "mild": "ED légère",
-        "mildModerate": "ED légère à modérée",
-        "moderate": "ED modérée",
-        "severe": "ED sévère"
+        "none": "Aucun problème — obtenue facilement",
+        "mild": "Obtenue facilement, avec parfois une légère difficulté",
+        "mildModerate": "Obtenue, mais avec une certaine difficulté",
+        "moderate": "Obtenue avec une difficulté importante",
+        "severe": "Rarement ou jamais capable d'obtenir une érection"
       }
     },
     "abnormalPsaLikelihood": "Probabilité estimée d'un PSA anormal / csPCa :",
@@ -762,7 +772,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "Niveau PSA"
+        "sectionTitle": "Antécédents de test PSA"
       },
       "mri": {
         "sectionTitle": "Résultats IRM (Optionnel)"
@@ -778,24 +788,14 @@
       "calculate": "Calculer l'évaluation des risques ✓"
     },
     "psa": {
-      "sectionTitle": "Niveau PSA",
-      "q1": "Connaissez-vous votre niveau PSA ?",
-      "q1OptNo": "Non, je ne connais pas mon PSA",
-      "q1OptYes": "Oui, je connais mon niveau PSA",
-      "q2": "Entrez le niveau PSA (ng/mL)",
-      "psaPlaceholder": "Niveau PSA (0.1-100)",
-      "psaInvalidValidity": "Le niveau PSA doit être entre 0.1 et 100 ng/mL",
-      "psaInvalid": "Le niveau PSA doit être entre 0.1 et 100 ng/mL",
-      "psaNote": "Le PSA (Antigène Spécifique de la Prostate) est un test sanguin utilisé pour dépister le cancer de la prostate.",
-      "q3": "Prenez-vous des médicaments hormonaux susceptibles d'affecter le PSA ?",
-      "q3InfoTitle": "Les médicaments comme la finastéride (Propecia/Proscar), la dutastéride (Avodart) ou d'autres inhibiteurs de la 5-alpha réductase peuvent abaisser les niveaux de PSA d'environ 50%. C'est important pour une évaluation précise des risques.",
-      "q3OptNo": "Non / Pas sûr",
-      "q3OptYes": "Oui, je prends une thérapie hormonale",
-      "q4Label": "Quel médicament ? (optionnel)",
-      "q4OptFinasteride": "Finastéride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutastéride (Avodart)",
-      "q4OptOther": "Autre / Pas sûr",
-      "q4Note": "Remarque : Ces médicaments peuvent abaisser le PSA d'environ 50%. Votre médecin peut avoir besoin d'ajuster la valeur PSA pour une interprétation précise."
+      "sectionTitle": "Antécédents de test PSA",
+      "q1": "Avez-vous déjà passé un test PSA ?",
+      "q1OptYes": "Oui",
+      "q1OptNo": "Non",
+      "q2": "Votre niveau de PSA était-il normal ou élevé ?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Élevé",
+      "q2OptNotSure": "Pas sûr"
     },
     "mri": {
       "sectionTitle": "Résultats IRM (Optionnel)",
@@ -907,6 +907,10 @@
     "timelineOngoingDesc": "Réévaluez avec ePSA si votre état de santé évolue",
     "highRiskNoticeStrong": "Facteurs de risque reconnus par les directives détectés.",
     "highRiskNoticeBody": "Votre score se situe dans la fourchette supérieure et vous présentez au moins un facteur de risque reconnu par les directives (âge ≥70 ans, ascendance africaine, antécédents familiaux au premier degré, mutation génétique héréditaire ou comorbidités multiples). Une évaluation précoce est recommandée.",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "Connaissez-vous votre PSA ? Ajoutez-le pour un bilan plus complet.",
     "psaCtaDesc": "En combinant votre résultat PSA avec ce bilan de base, vous obtenez une évaluation ePSA complète — y compris la recommandation ou non d'une IRM.",
     "psaCtaButton": "Ajouter le résultat PSA",
@@ -1231,9 +1235,9 @@
     "defaultsHint": "Utilisation : Tabagisme = Jamais, Alimentation = Régulière (Occidentale), Exposition chimique = Non, Mutation génétique = Non, Inflammation = Non, Comorbidités = Aucune, Exercice = Régulier.",
     "exerciseLabel": "Niveau d'exercice",
     "exercise": {
-      "regular": "Régulier (3+ jours/semaine)",
-      "some": "Quelque peu (1-2 jours/semaine)",
-      "none": "Aucun"
+      "regular": "Régulier (3+ jours/semaine, ≥1 heure)",
+      "some": "Modéré (1-2 jours/semaine, ≥1 heure)",
+      "none": "Sédentaire (rarement ou jamais)"
     },
     "comorbiditiesLabel": "Comorbidités",
     "comorbidities": {

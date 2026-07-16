@@ -405,6 +405,16 @@
         "helper": "您是否接受过遗传性前列腺癌基因变异（如 BRCA1/2、HOXB13、ATM 或 Lynch 综合征）检测？仅在检测确认您携带相关基因时选择「是」。如果检测未发现异常，选择「否」。如果从未接受检测，选择「未知」。",
         "description": "某些遗传性基因变异会增加前列腺癌风险。BRCA2 与更高风险和更具侵袭性的疾病相关。HOXB13（尤其是 G84E 变体）在某些家族中存在遗传，同样会增加风险。ATM 和 Lynch 综合征基因也会增加风险。AUA、NCCN 和 EAU 指南建议，若检测确认携带相关基因，应更早且更频繁地进行 PSA 筛查。"
       },
+      "psaKnown": {
+        "title": "您知道自己的 PSA 水平吗？",
+        "helper": "如果您以前做过 PSA 血液检测并且知道结果，可以在下方输入，以便更精确地估算风险。",
+        "description": "PSA（前列腺特异性抗原）通过简单的血液检测测得。输入已知结果可让本工具将其与您的其他风险因素结合，得出更精确的估算。"
+      },
+      "psaValue": {
+        "title": "PSA 数值（ng/mL）",
+        "placeholder": "例如 4.2",
+        "helper": "请输入您最近一次的 PSA 检测结果，单位为每毫升纳克数（ng/mL）。"
+      },
       "heightWeight": {
         "title": "身高与体重（BMI）",
         "description": "肥胖与侵袭性前列腺癌的风险增加有关。较高的身高可能是轻微的风险因素。"
@@ -526,13 +536,13 @@
       "toggleShort": "使用简短版（单一严重程度问题）",
       "toggleFull": "使用完整 SHIM（5 个问题）",
       "skip": "跳过——无勃起方面困扰",
-      "singleQuestionLabel": "总体而言，您如何描述过去 6 个月的勃起功能？",
+      "singleQuestionLabel": "在过去 6 个月中，您如何描述自己获得勃起的能力？",
       "options": {
-        "none": "无勃起功能障碍",
-        "mild": "轻度 ED",
-        "mildModerate": "轻至中度 ED",
-        "moderate": "中度 ED",
-        "severe": "重度 ED"
+        "none": "没有问题——容易达到",
+        "mild": "容易达到，偶尔有轻微困难",
+        "mildModerate": "能够达到，但有些困难",
+        "moderate": "达到时有明显困难",
+        "severe": "很少或从未能够达到勃起"
       }
     },
     "abnormalPsaLikelihood": "PSA 异常 / csPCa 的估计可能性：",
@@ -632,9 +642,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "定期（每周3天以上）",
-        "some": "有时（每周1-2天）",
-        "none": "无"
+        "regular": "定期（每周3天以上，每次≥1小时）",
+        "some": "中等（每周1-2天，每次≥1小时）",
+        "none": "久坐（很少或从不）"
       },
       "smoking": {
         "current": "当前吸烟",
@@ -766,7 +776,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA水平"
+        "sectionTitle": "PSA检测史"
       },
       "mri": {
         "sectionTitle": "MRI结果（可选）"
@@ -782,24 +792,14 @@
       "calculate": "计算风险评估 ✓"
     },
     "psa": {
-      "sectionTitle": "PSA水平",
-      "q1": "您知道您的PSA水平吗？",
-      "q1OptNo": "不，我不知道我的PSA",
-      "q1OptYes": "是，我知道我的PSA水平",
-      "q2": "输入PSA水平（ng/mL）",
-      "psaPlaceholder": "PSA水平（0.1-100）",
-      "psaInvalidValidity": "PSA水平必须在0.1到100 ng/mL之间",
-      "psaInvalid": "PSA水平必须在0.1到100 ng/mL之间",
-      "psaNote": "PSA（前列腺特异性抗原）是一种用于筛查前列腺癌的血液检测。",
-      "q3": "您是否正在服用可能影响PSA的激素药物？",
-      "q3InfoTitle": "非那雄胺（Propecia/Proscar）、度他雄胺（Avodart）或其他5-α还原酶抑制剂等药物可将PSA水平降低约50%。这对于准确的风险评估很重要。",
-      "q3OptNo": "否/不确定",
-      "q3OptYes": "是，我正在接受激素治疗",
-      "q4Label": "哪种药物？（可选）",
-      "q4OptFinasteride": "非那雄胺（Propecia/Proscar）",
-      "q4OptDutasteride": "度他雄胺（Avodart）",
-      "q4OptOther": "其他/不确定",
-      "q4Note": "注意：这些药物可将PSA降低约50%。您的医生可能需要调整PSA值以进行准确解读。"
+      "sectionTitle": "PSA检测史",
+      "q1": "您以前做过PSA检测吗？",
+      "q1OptYes": "是",
+      "q1OptNo": "否",
+      "q2": "您的PSA水平是正常还是偏高？",
+      "q2OptNormal": "正常",
+      "q2OptElevated": "偏高",
+      "q2OptNotSure": "不确定"
     },
     "mri": {
       "sectionTitle": "MRI结果（可选）",
@@ -907,6 +907,10 @@
     "timelineOngoingDesc": "如果您的健康状况发生变化，请使用ePSA重新评估",
     "highRiskNoticeStrong": "检测到指南认可的风险因素。",
     "highRiskNoticeBody": "您的分数处于较高范围，且您至少具有一项指南认可的风险因素（年龄≥70岁、黑人血统、一级亲属家族史、遗传性基因突变或多种合并症）。建议尽早进行评估。",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "已知您的PSA值？添加后可获得更完整的评估。",
     "psaCtaDesc": "将您的PSA结果与此基线相结合，可获得完整的ePSA评估——包括是否建议进行MRI检查。",
     "psaCtaButton": "添加PSA结果",
@@ -1243,9 +1247,9 @@
     "defaultsHint": "使用：吸烟=从不，饮食=普通（西式），化学物质暴露=否，遗传突变=否，炎症=否，合并症=无，运动=定期。",
     "exerciseLabel": "运动水平",
     "exercise": {
-      "regular": "定期（每周3天以上）",
-      "some": "有时（每周1-2天）",
-      "none": "无"
+      "regular": "定期（每周3天以上，每次≥1小时）",
+      "some": "中等（每周1-2天，每次≥1小时）",
+      "none": "久坐（很少或从不）"
     },
     "comorbiditiesLabel": "合并症",
     "comorbidities": {

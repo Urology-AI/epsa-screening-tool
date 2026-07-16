@@ -405,6 +405,16 @@
         "helper": "यदि आपको बताया गया है कि आप BRCA2 या HOXB13 जैसे वंशानुगत प्रोस्टेट कैंसर-संबंधित उत्परिवर्तन के वाहक हैं, तो हाँ चुनें।",
         "description": "यदि आपको बताया गया है कि आप BRCA2 या HOXB13 जैसे वंशानुगत उत्परिवर्तन के वाहक हैं, तो हाँ चुनें। BRCA2 उत्परिवर्तन प्रोस्टेट कैंसर के बढ़े हुए जोखिम से जुड़े हैं।"
       },
+      "psaKnown": {
+        "title": "क्या आप अपना PSA स्तर जानते हैं?",
+        "helper": "यदि आपने पहले PSA रक्त परीक्षण करवाया है और परिणाम जानते हैं, तो अपने जोखिम अनुमान को अधिक सटीक बनाने के लिए इसे नीचे दर्ज करें।",
+        "description": "PSA (प्रोस्टेट-स्पेसिफिक एंटीजन) एक सरल रक्त परीक्षण से मापा जाता है। ज्ञात परिणाम दर्ज करने से यह उपकरण इसे आपके अन्य जोखिम कारकों के साथ मिलाकर अधिक सटीक अनुमान दे सकता है।"
+      },
+      "psaValue": {
+        "title": "PSA मान (ng/mL)",
+        "placeholder": "उदा. 4.2",
+        "helper": "अपना सबसे हालिया PSA परीक्षण परिणाम नैनोग्राम प्रति मिलीलीटर (ng/mL) में दर्ज करें।"
+      },
       "heightWeight": {
         "title": "ऊंचाई और वजन (BMI)",
         "description": "मोटापा आक्रामक प्रोस्टेट कैंसर के बढ़े हुए जोखिम से जुड़ा है।"
@@ -575,9 +585,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "नियमित (सप्ताह में 3+ दिन)",
-        "some": "कुछ (सप्ताह में 1-2 दिन)",
-        "none": "कोई नहीं"
+        "regular": "नियमित (सप्ताह में 3+ दिन, ≥1 घंटा)",
+        "some": "मध्यम (सप्ताह में 1-2 दिन, ≥1 घंटा)",
+        "none": "गतिहीन (शायद ही कभी या कभी नहीं)"
       },
       "smoking": {
         "current": "वर्तमान",
@@ -724,13 +734,13 @@
       "toggleShort": "संक्षिप्त संस्करण का उपयोग करें (एकल गंभीरता प्रश्न)",
       "toggleFull": "पूरा SHIM उपयोग करें (5 प्रश्न)",
       "skip": "छोड़ें — स्तंभन संबंधी कोई समस्या नहीं",
-      "singleQuestionLabel": "कुल मिलाकर, पिछले 6 महीनों में आप अपने स्तंभन क्रिया को कैसे बताएँगे?",
+      "singleQuestionLabel": "पिछले 6 महीनों में, इरेक्शन प्राप्त करने की अपनी क्षमता को आप कैसे बताएँगे?",
       "options": {
-        "none": "कोई स्तंभन दोष नहीं",
-        "mild": "हल्का ED",
-        "mildModerate": "हल्का–मध्यम ED",
-        "moderate": "मध्यम ED",
-        "severe": "गंभीर ED"
+        "none": "कोई समस्या नहीं — आसानी से प्राप्त हुआ",
+        "mild": "आसानी से प्राप्त हुआ, कभी-कभी थोड़ी कठिनाई के साथ",
+        "mildModerate": "प्राप्त हुआ, पर कुछ कठिनाई के साथ",
+        "moderate": "काफी कठिनाई के साथ प्राप्त हुआ",
+        "severe": "शायद ही कभी या कभी नहीं इरेक्शन प्राप्त हुआ"
       }
     },
     "abnormalPsaLikelihood": "असामान्य PSA / csPCa की अनुमानित संभावना:",
@@ -762,7 +772,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA स्तर"
+        "sectionTitle": "PSA परीक्षण इतिहास"
       },
       "mri": {
         "sectionTitle": "MRI परिणाम (वैकल्पिक)"
@@ -778,24 +788,14 @@
       "calculate": "जोखिम मूल्यांकन गणना करें ✓"
     },
     "psa": {
-      "sectionTitle": "PSA स्तर",
-      "q1": "क्या आप अपना PSA स्तर जानते हैं?",
-      "q1OptNo": "नहीं, मुझे अपना PSA नहीं पता",
-      "q1OptYes": "हाँ, मुझे अपना PSA स्तर पता है",
-      "q2": "PSA स्तर दर्ज करें (ng/mL)",
-      "psaPlaceholder": "PSA स्तर (0.1-100)",
-      "psaInvalidValidity": "PSA स्तर 0.1 और 100 ng/mL के बीच होना चाहिए",
-      "psaInvalid": "PSA स्तर 0.1 और 100 ng/mL के बीच होना चाहिए",
-      "psaNote": "PSA (प्रोस्टेट-विशिष्ट एंटीजन) प्रोस्टेट कैंसर की जांच के लिए उपयोग किया जाने वाला रक्त परीक्षण है।",
-      "q3": "क्या आप कोई हार्मोनल दवाएं ले रहे हैं जो PSA को प्रभावित कर सकती हैं?",
-      "q3InfoTitle": "फिनास्टेराइड (Propecia/Proscar), ड्यूटास्टेराइड (Avodart) जैसी दवाएं PSA स्तर को लगभग 50% कम कर सकती हैं।",
-      "q3OptNo": "नहीं / निश्चित नहीं",
-      "q3OptYes": "हाँ, मैं हार्मोनल थेरेपी ले रहा हूं",
-      "q4Label": "कौन सी दवा? (वैकल्पिक)",
-      "q4OptFinasteride": "फिनास्टेराइड (Propecia/Proscar)",
-      "q4OptDutasteride": "ड्यूटास्टेराइड (Avodart)",
-      "q4OptOther": "अन्य / निश्चित नहीं",
-      "q4Note": "नोट: ये दवाएं PSA को ~50% कम कर सकती हैं। सटीक व्याख्या के लिए आपके डॉक्टर को PSA मूल्य समायोजित करने की आवश्यकता हो सकती है।"
+      "sectionTitle": "PSA परीक्षण इतिहास",
+      "q1": "क्या आपने पहले कभी PSA परीक्षण करवाया है?",
+      "q1OptYes": "हाँ",
+      "q1OptNo": "नहीं",
+      "q2": "क्या आपका PSA स्तर सामान्य था या अधिक?",
+      "q2OptNormal": "सामान्य",
+      "q2OptElevated": "अधिक",
+      "q2OptNotSure": "निश्चित नहीं"
     },
     "mri": {
       "sectionTitle": "MRI परिणाम (वैकल्पिक)",
@@ -844,6 +844,10 @@
     "timelineOngoingDesc": "यदि आपकी स्वास्थ्य स्थिति बदलती है तो ePSA से पुनः मूल्यांकन करें",
     "highRiskNoticeStrong": "दिशानिर्देश-मान्यता प्राप्त जोखिम कारक पाए गए।",
     "highRiskNoticeBody": "आपका स्कोर उच्च सीमा में है और आपके पास कम से कम एक दिशानिर्देश-मान्यता प्राप्त जोखिम कारक है (आयु ≥70, अश्वेत वंश, प्रथम-डिग्री पारिवारिक इतिहास, वंशानुगत आनुवंशिक उत्परिवर्तन, या एकाधिक सहरुग्णताएं)। पहले मूल्यांकन की अनुशंसा की जाती है।",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "अपना PSA जानते हैं? अधिक पूर्ण चित्र के लिए इसे जोड़ें।",
     "psaCtaDesc": "आपके PSA परिणाम को इस आधारभूत के साथ मिलाकर आपको एक पूर्ण ePSA मूल्यांकन मिलता है — जिसमें यह भी शामिल है कि MRI की अनुशंसा की जाती है या नहीं।",
     "psaCtaButton": "PSA परिणाम जोड़ें",
@@ -1231,9 +1235,9 @@
     "defaultsHint": "उपयोग: धूम्रपान = कभी नहीं, आहार = नियमित (पश्चिमी), रासायनिक संपर्क = नहीं, आनुवंशिक उत्परिवर्तन = नहीं, सूजन = नहीं, सहरुग्णताएं = कोई नहीं, व्यायाम = नियमित।",
     "exerciseLabel": "व्यायाम स्तर",
     "exercise": {
-      "regular": "नियमित (सप्ताह में 3+ दिन)",
-      "some": "कुछ (सप्ताह में 1-2 दिन)",
-      "none": "कोई नहीं"
+      "regular": "नियमित (सप्ताह में 3+ दिन, ≥1 घंटा)",
+      "some": "मध्यम (सप्ताह में 1-2 दिन, ≥1 घंटा)",
+      "none": "गतिहीन (शायद ही कभी या कभी नहीं)"
     },
     "comorbiditiesLabel": "सहरुग्णताएं",
     "comorbidities": {

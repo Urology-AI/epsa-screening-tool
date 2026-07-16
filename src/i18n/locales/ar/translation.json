@@ -283,6 +283,16 @@
         "helper": "اختر نعم إذا أُخبرت بأنك تحمل طفرة وراثية مرتبطة بسرطان البروستاتا، مثل BRCA2 أو HOXB13.",
         "description": "اختر نعم إذا أُخبرت بأنك تحمل طفرة وراثية مرتبطة بسرطان البروستاتا، مثل BRCA2 أو HOXB13. ترتبط طفرات BRCA2 بزيادة خطر الإصابة بسرطان البروستاتا ويمكن أن تكون مرتبطة بمرض أكثر عدوانية. HOXB13، لا سيما المتغير G84E في بعض العائلات، هو جين وراثي للقابلية للإصابة بسرطان البروستاتا."
       },
+      "psaKnown": {
+        "title": "هل تعرف مستوى PSA لديك؟",
+        "helper": "إذا كنت قد أجريت تحليل PSA من قبل وتعرف النتيجة، يمكنك إدخالها أدناه لتحسين دقة تقدير خطرك.",
+        "description": "يُقاس PSA (المستضد النوعي للبروستاتا) بتحليل دم بسيط. إدخال نتيجة معروفة يتيح للأداة دمجها مع عوامل الخطر الأخرى للحصول على تقدير أكثر دقة."
+      },
+      "psaValue": {
+        "title": "قيمة PSA (نانوغرام/مل)",
+        "placeholder": "مثال: 4.2",
+        "helper": "أدخل آخر نتيجة لتحليل PSA لديك، بوحدة نانوغرام لكل مليلتر (ng/mL)."
+      },
       "heightWeight": {
         "title": "الطول والوزن (مؤشر كتلة الجسم)",
         "description": "ترتبط السمنة بزيادة خطر الإصابة بسرطان البروستاتا العدواني. قد تكون الطولانية الأكبر عاملاً خطراً طفيفاً."
@@ -453,9 +463,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "منتظم (3+ أيام/أسبوع)",
-        "some": "بعض (1-2 أيام/أسبوع)",
-        "none": "لا شيء"
+        "regular": "منتظم (3+ أيام/أسبوع، ساعة أو أكثر)",
+        "some": "متوسط (1-2 أيام/أسبوع، ساعة أو أكثر)",
+        "none": "خامل (نادرًا أو أبدًا)"
       },
       "smoking": {
         "current": "حالياً",
@@ -602,13 +612,13 @@
       "toggleShort": "استخدم النسخة المختصرة (سؤال واحد عن الشدة)",
       "toggleFull": "استخدم SHIM الكامل (5 أسئلة)",
       "skip": "تخطٍّ — لا توجد لديّ مشكلات في الانتصاب",
-      "singleQuestionLabel": "بشكل عام، كيف تصف وظيفة الانتصاب لديك خلال الأشهر الستة الماضية؟",
+      "singleQuestionLabel": "خلال الأشهر الستة الماضية، كيف تصف قدرتك على تحقيق الانتصاب؟",
       "options": {
-        "none": "لا يوجد ضعف انتصاب",
-        "mild": "ED خفيف",
-        "mildModerate": "ED خفيف إلى متوسط",
-        "moderate": "ED متوسط",
-        "severe": "ED شديد"
+        "none": "لا توجد مشكلة — يتحقق بسهولة",
+        "mild": "يتحقق بسهولة، مع بعض الصعوبة أحياناً",
+        "mildModerate": "يتحقق، لكن مع بعض الصعوبة",
+        "moderate": "يتحقق بصعوبة ملحوظة",
+        "severe": "نادراً أو أبداً ما يمكنني تحقيق الانتصاب"
       }
     },
     "abnormalPsaLikelihood": "الاحتمال التقديري لـ PSA غير طبيعي / csPCa:",
@@ -640,7 +650,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "مستوى PSA"
+        "sectionTitle": "سجل فحص PSA"
       },
       "mri": {
         "sectionTitle": "نتائج التصوير بالرنين المغناطيسي (اختياري)"
@@ -656,24 +666,14 @@
       "calculate": "احسب تقييم المخاطر ✓"
     },
     "psa": {
-      "sectionTitle": "مستوى PSA",
-      "q1": "هل تعرف مستوى PSA الخاص بك؟",
-      "q1OptNo": "لا، لا أعرف مستوى PSA الخاص بي",
-      "q1OptYes": "نعم، أعرف مستوى PSA الخاص بي",
-      "q2": "أدخل مستوى PSA (ng/mL)",
-      "psaPlaceholder": "مستوى PSA (0.1-100)",
-      "psaInvalidValidity": "يجب أن يكون مستوى PSA بين 0.1 و 100 ng/mL",
-      "psaInvalid": "يجب أن يكون مستوى PSA بين 0.1 و 100 ng/mL",
-      "psaNote": "PSA (المستضد البروستاتي الخاص) هو فحص دم يُستخدم للكشف عن سرطان البروستاتا.",
-      "q3": "هل تتناول أي أدوية هرمونية قد تؤثر على PSA؟",
-      "q3InfoTitle": "يمكن للأدوية مثل فيناستيريد (بروبيسيا/بروسكار) أو دوتاستيريد (أفودارت) أو غيرها من مثبطات 5-ألفا ريدكتاز أن تخفض مستويات PSA بنحو 50%. هذا مهم لتقييم دقيق للمخاطر.",
-      "q3OptNo": "لا / غير متأكد",
-      "q3OptYes": "نعم، أتناول العلاج الهرموني",
-      "q4Label": "أي دواء؟ (اختياري)",
-      "q4OptFinasteride": "فيناستيريد (بروبيسيا/بروسكار)",
-      "q4OptDutasteride": "دوتاستيريد (أفودارت)",
-      "q4OptOther": "آخر / غير متأكد",
-      "q4Note": "ملاحظة: يمكن لهذه الأدوية أن تخفض PSA بنسبة ~50%. قد يحتاج طبيبك إلى تعديل قيمة PSA للتفسير الدقيق."
+      "sectionTitle": "سجل فحص PSA",
+      "q1": "هل سبق أن أجريت فحص PSA؟",
+      "q1OptYes": "نعم",
+      "q1OptNo": "لا",
+      "q2": "هل كان مستوى PSA لديك طبيعياً أم مرتفعاً؟",
+      "q2OptNormal": "طبيعي",
+      "q2OptElevated": "مرتفع",
+      "q2OptNotSure": "غير متأكد"
     },
     "mri": {
       "sectionTitle": "نتائج التصوير بالرنين المغناطيسي (اختياري)",
@@ -785,6 +785,10 @@
     "timelineOngoingDesc": "أعد التقييم باستخدام ePSA إذا تغيّرت حالتك الصحية",
     "highRiskNoticeStrong": "تم اكتشاف عوامل خطر معترف بها في الإرشادات السريرية.",
     "highRiskNoticeBody": "نتيجتك في النطاق المرتفع ولديك عامل خطر واحد على الأقل معترف به في الإرشادات السريرية (العمر ≥70، الأصل الأفريقي، تاريخ عائلي من الدرجة الأولى، طفرة وراثية وراثية، أو أمراض مزمنة متعددة). يُنصح بالتقييم المبكر.",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "هل تعرف قيمة PSA لديك؟ أضفها للحصول على صورة أكثر اكتمالاً.",
     "psaCtaDesc": "يمنحك الجمع بين نتيجة PSA وهذه البيانات الأساسية تقييماً كاملاً لـ ePSA — بما في ذلك ما إذا كان التصوير بالرنين المغناطيسي موصىً به.",
     "psaCtaButton": "إضافة نتيجة PSA",
@@ -1099,9 +1103,9 @@
     "defaultsHint": "استخدام: التدخين = لم يدخن قط، النظام الغذائي = عادي (غربي)، التعرض الكيميائي = لا، الطفرة الجينية = لا، الالتهاب = لا، الأمراض المصاحبة = لا شيء، التمرين = منتظم.",
     "exerciseLabel": "مستوى التمرين",
     "exercise": {
-      "regular": "منتظم (3+ أيام/أسبوع)",
-      "some": "بعض (1-2 أيام/أسبوع)",
-      "none": "لا شيء"
+      "regular": "منتظم (3+ أيام/أسبوع، ساعة أو أكثر)",
+      "some": "متوسط (1-2 أيام/أسبوع، ساعة أو أكثر)",
+      "none": "خامل (نادرًا أو أبدًا)"
     },
     "comorbiditiesLabel": "الأمراض المصاحبة",
     "comorbidities": {

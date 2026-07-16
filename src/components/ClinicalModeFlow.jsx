@@ -9,7 +9,7 @@ import ThemeSwitcher from './ThemeSwitcher.jsx';
 import TextScaleControl from './TextScaleControl.jsx';
 import { fieldReferences } from '../utils/fieldReferences';
 import { calculateDynamicEPsa } from '../utils/dynamicCalculator';
-import { DEFAULT_CALCULATOR_CONFIG } from '@epsa/engine';
+import { DEFAULT_CALCULATOR_CONFIG, calculateDynamicEPsaPost } from '@epsa/engine';
 import { FH_MAP, DIET_MAP, deriveIpssFromQol, expandShimSingle } from '../utils/epsaFormUtils';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
@@ -36,20 +36,6 @@ function deriveBmi(a, mH, mW) {
     : (parseFloat(a.heightFt) || 0) * 12 + (parseFloat(a.heightIn) || 0);
   const lbs = mW ? (parseFloat(a.weightKg) || 0) * 2.20462 : parseFloat(a.weightLbs);
   return inches && lbs ? (703 * lbs) / (inches * inches) : null;
-}
-function deriveIpss(qol) {
-  // Maps IPSS Quality of Life question (0–6) to a 7-item IPSS array.
-  // Mapping calibrated against Barry et al. (J Urol 1992) median IPSS by QoL response:
-  //   QoL 0–1 (Delighted/Pleased)        → total 0  (mild,     IPSS 0–7)
-  //   QoL 2   (Mostly Satisfied)          → total 7  (mild,     IPSS 0–7)
-  //   QoL 3   (Mixed)                     → total 14 (moderate, IPSS 8–19)
-  //   QoL 4   (Mostly Dissatisfied)       → total 21 (moderate-severe boundary)
-  //   QoL 5–6 (Unhappy/Terrible)          → total 35 (severe,   IPSS 20–35)
-  if (qol <= 1) return [0, 0, 0, 0, 0, 0, 0];   // total 0  — mild
-  if (qol === 2) return [1, 1, 1, 1, 1, 1, 1];   // total 7  — mild
-  if (qol === 3) return [2, 2, 2, 2, 2, 2, 2];   // total 14 — moderate
-  if (qol === 4) return [3, 3, 3, 3, 3, 3, 3];   // total 21 — moderate-severe
-  return [5, 5, 5, 5, 5, 5, 5];                  // total 35 — severe
 }
 
 /* ─── Chip group ─── */
@@ -334,6 +320,18 @@ function WelcomeScreen({ onStart, onStaffAccess, onPrintForm, onPrintQr }) {
               <span className="qef-learn-badge">Not a diagnosis</span>
             </div>
           </div>
+
+          <div className="qef-learn-card qef-learn-card--trust">
+            <div className="qef-learn-card-head">
+              <strong>Why trust this tool?</strong>
+            </div>
+            <p>
+              ePSA is developed and maintained by the <strong>Department of Urology at the Icahn School of Medicine at Mount Sinai</strong>,
+              under Principal Investigator Ashutosh K. Tewari, MD. It is built from real, de-identified Mount Sinai patient
+              data collected under IRB-approved research protocol <strong>STUDY-14-00050</strong>, and its recommendations
+              are aligned with national screening guidelines (AUA/SUO, NCCN). ePSA is an educational aid, not a diagnosis.
+            </p>
+          </div>
         </div>
 
         {/* ── Services ── */}
@@ -385,6 +383,15 @@ function WelcomeScreen({ onStart, onStaffAccess, onPrintForm, onPrintQr }) {
         >
           {holding ? 'Hold…' : 'Staff access'}
         </button>
+
+        <div className="qef-institution-footer">
+          <img src="/sinai_dark.png" alt="" aria-hidden="true" className="qef-institution-logo" onError={(e) => { e.target.style.display = 'none'; }} />
+          <p className="qef-institution-text">
+            Developed by the <strong>Department of Urology</strong>, Icahn School of Medicine at Mount Sinai
+            <br />
+            IRB Protocol STUDY-14-00050 · Aligned with AUA/SUO &amp; NCCN screening guidelines
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -437,6 +444,7 @@ export default function ClinicalModeFlow() {
   const [metricW, setMetricW] = useState(false);
   const [result, setResult] = useState(restored?.result ?? null);
   const [ageError, setAgeError] = useState('');
+  const [psaError, setPsaError] = useState('');
   const [uid, setUid] = useState(null);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(null); // null = not counting
   const [sessionRef, setSessionRef] = useState(restored?.sessionRef ?? null);
@@ -511,7 +519,9 @@ export default function ClinicalModeFlow() {
     return {
       age:           !!(age && age >= 18 && age <= 99),
       race:          !!answers.race,
-      familyHistory: answers.familyHistory !== undefined && answers.familyHistory !== null && answers.familyHistory !== '',
+      familyHistory: answers.familyHistory !== undefined && answers.familyHistory !== null && answers.familyHistory !== ''
+        && answers.familyHistoryBreastCancer !== undefined && answers.familyHistoryBreastCancer !== null && answers.familyHistoryBreastCancer !== ''
+        && answers.familyHistoryPancreaticCancer !== undefined && answers.familyHistoryPancreaticCancer !== null && answers.familyHistoryPancreaticCancer !== '',
       qol:           answers.qol !== undefined && answers.qol !== null && answers.qol !== '',
       height:        heightOk,
       weight:        weightOk,
@@ -550,13 +560,32 @@ export default function ClinicalModeFlow() {
     else setAgeError('');
   }
 
+  function handlePsaValueBlur() {
+    if (answers.psaValue === '' || answers.psaValue === undefined) { setPsaError(''); return; }
+    const num = parseFloat(answers.psaValue);
+    if (isNaN(num) || num < 0) setPsaError('Please enter a valid PSA value (0 or greater).');
+    else setPsaError('');
+  }
+
   async function handleSubmit() {
     if (!ready) return;
+    // BRCA1/2 germline mutations are also the driver behind hereditary breast and
+    // pancreatic cancer syndromes. A reported family history of either — without a
+    // confirmed negative or positive genetic test — is treated as an elevated,
+    // BRCA-associated risk signal (same scoring bucket the engine already uses for
+    // "other_elevated" hereditary findings), per AUA/NCCN guidance on hereditary risk.
+    const hasBrcaLinkedFamilyHistory = answers.familyHistoryBreastCancer === 'yes'
+      || answers.familyHistoryPancreaticCancer === 'yes';
+    const effectiveBrcaStatus = (answers.brca === 'yes' || answers.brca === 'no')
+      ? answers.brca
+      : (hasBrcaLinkedFamilyHistory ? 'other_elevated' : answers.brca);
     const formData = {
       age: parseInt(answers.age),
       race: answers.race,
       ethnicity: answers.ethnicity || null,
       familyHistory: FH_MAP[answers.familyHistory] ?? 0,
+      familyHistoryBreastCancer: answers.familyHistoryBreastCancer ?? 'unknown',
+      familyHistoryPancreaticCancer: answers.familyHistoryPancreaticCancer ?? 'unknown',
       ipss: deriveIpssFromQol(answers.qol),
       ipssQol: answers.qol,
       shim: expandShimSingle(answers.shim),
@@ -571,27 +600,42 @@ export default function ClinicalModeFlow() {
       weightKg: answers.weightKg,
       metricH,
       metricW,
-      brcaStatus: answers.brca,
+      brcaStatus: effectiveBrcaStatus,
       inflammationHistory: answers.inflammation === 'yes' ? 1 : 0,
       chemicalExposure: answers.chemicalExposure ?? 'no',
       comorbidityScore: Number(answers.comorbidities) || 0,
       hypertension: null, hyperlipidemia: null, coronaryArteryDisease: null, diabetes: null,
     };
     const engineResult = calculateDynamicEPsa(formData, DEFAULT_CALCULATOR_CONFIG);
+
+    // If the patient knows their PSA level and entered a valid value, run it
+    // through Model 2 (post_psa pathway) so the results screen can show the
+    // combined ePSA + PSA tier, discordance flag, and MRI guidance — instead
+    // of just the pre-PSA screening estimate.
+    let postResult = null;
+    const psaNum = parseFloat(answers.psaValue);
+    if (answers.psaKnown === 'yes' && !isNaN(psaNum) && psaNum >= 0) {
+      postResult = calculateDynamicEPsaPost(
+        engineResult,
+        { psa: psaNum, pathwayMode: 'post_psa' },
+        DEFAULT_CALCULATOR_CONFIG,
+      );
+    }
+
     const ref = generateSessionRef();
     setSessionRef(ref);
-    setResult({ engineResult, formData });
+    setResult({ engineResult, formData, postResult });
     // Ask consent after results — patient has context for what they're agreeing to.
     setScreen(consented !== null ? 'result' : 'storage_consent');
-    if (consented !== null) persistSession(consented, { formData, engineResult }, ref);
+    if (consented !== null) persistSession(consented, { formData, engineResult, postResult }, ref);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /** Save the session with the patient's consent choice. Consented sessions
    *  go to Turso + REDCap; non-consented ones stay on this device only. */
-  function persistSession(didConsent, { formData, engineResult }, ref) {
+  function persistSession(didConsent, { formData, engineResult, postResult = null }, ref) {
     const localSave = uid
-      ? saveClinicalSession(uid, { formData, engineResult, sessionRef: ref, rawAnswers: answers, consented: didConsent, unitCode: unitCode || undefined }).catch(() => null)
+      ? saveClinicalSession(uid, { formData, engineResult, postResult, sessionRef: ref, rawAnswers: answers, consented: didConsent, unitCode: unitCode || undefined }).catch(() => null)
       : Promise.resolve(null);
     if (!didConsent) {
       setCloudStatus('local');
@@ -606,6 +650,7 @@ export default function ClinicalModeFlow() {
           createdAt: new Date().toISOString(),
           formData,
           engineResult,
+          postResult,
           rawAnswers: answers,
           consented: true,
           unitCode: unitCode || undefined,
@@ -636,7 +681,7 @@ export default function ClinicalModeFlow() {
 
   function handleReset() {
     clearActiveSession();
-    setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setSessionRef(null); setCloudStatus(null); setConsented(null); setUnitCode('');
+    setAnswers({}); setMetricH(false); setMetricW(false); setResult(null); setAgeError(''); setPsaError(''); setSessionRef(null); setCloudStatus(null); setConsented(null); setUnitCode('');
     i18n.changeLanguage('en');
     setScreen('welcome');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -741,6 +786,7 @@ export default function ClinicalModeFlow() {
         </div>
         <ClinicalModeResult
           result={result.engineResult}
+          postResult={result.postResult}
           answers={answers}
           formData={result.formData}
           sessionRef={sessionRef}
@@ -839,6 +885,28 @@ export default function ClinicalModeFlow() {
               { value: 'one',      label: t('quickEntry.family.one') },
               { value: 'two_plus', label: t('quickEntry.family.twoPlus') },
               { value: 'unknown',  label: t('part1.options.unknown') },
+            ]}
+          />
+
+          {/* Family history of BRCA-linked cancers (breast, pancreatic) — hereditary
+              cancer syndromes that also raise prostate cancer risk. */}
+          <p className="qef-sublabel qef-sublabel--nested">{t('part1.fields.familyHistoryBreastCancer.helper')}</p>
+          <Chips ariaLabel={t('part1.fields.familyHistoryBreastCancer.title')}
+            value={answers.familyHistoryBreastCancer ?? ''} onChange={(v) => set('familyHistoryBreastCancer', v)}
+            options={[
+              { value: 'no',      label: t('part1.options.no') },
+              { value: 'yes',     label: t('part1.options.yes') },
+              { value: 'unknown', label: t('part1.options.unknown') },
+            ]}
+          />
+
+          <p className="qef-sublabel qef-sublabel--nested">{t('part1.fields.familyHistoryPancreaticCancer.helper')}</p>
+          <Chips ariaLabel={t('part1.fields.familyHistoryPancreaticCancer.title')}
+            value={answers.familyHistoryPancreaticCancer ?? ''} onChange={(v) => set('familyHistoryPancreaticCancer', v)}
+            options={[
+              { value: 'no',      label: t('part1.options.no') },
+              { value: 'yes',     label: t('part1.options.yes') },
+              { value: 'unknown', label: t('part1.options.unknown') },
             ]}
           />
         </QCard>
@@ -1012,6 +1080,35 @@ export default function ClinicalModeFlow() {
                 { value: 'unknown', label: 'Unknown' },
               ]}
             />
+          </QCard>
+
+          {/* Known PSA level — optional numeric entry that refines the estimate */}
+          <QCard num="+" label={t('part1.fields.psaKnown.title')}
+            sublabel={t('part1.fields.psaKnown.helper')}
+            answered={answers.psaKnown !== undefined} qid="psaKnown">
+            <Chips ariaLabel={t('part1.fields.psaKnown.title')} value={answers.psaKnown ?? ''} onChange={(v) => { set('psaKnown', v); if (v !== 'yes') { set('psaValue', ''); setPsaError(''); } }}
+              options={[
+                { value: 'yes', label: t('part1.options.yes') },
+                { value: 'no',  label: t('part1.options.no') },
+              ]}
+            />
+            {answers.psaKnown === 'yes' && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <label className="qef-sublabel" htmlFor="qef-psa-value" style={{ display: 'block', marginBottom: '0.35rem' }}>
+                  {t('part1.fields.psaValue.title')}
+                </label>
+                <input
+                  id="qef-psa-value"
+                  className={`qef-input${psaError ? ' qef-input--error' : ''}`}
+                  type="number" min={0} step="0.01"
+                  placeholder={t('part1.fields.psaValue.placeholder')}
+                  value={answers.psaValue ?? ''}
+                  onChange={(e) => { set('psaValue', e.target.value); setPsaError(''); }}
+                  onBlur={handlePsaValueBlur}
+                />
+                {psaError && <p className="qef-field-error">{psaError}</p>}
+              </div>
+            )}
           </QCard>
         </div>
 

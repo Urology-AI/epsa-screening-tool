@@ -4,16 +4,18 @@ import jsPDF from 'jspdf';
 import './PrintableForm.css';
 import './ClinicalModeResultPrint.css';
 
+// Matches the on-screen results palette (green/amber/red) for consistency
+// between the live view and the printed/PDF copy.
 const TIER_COLORS = {
-  low:          '#16a34a',
-  intermediate: '#2563eb',
-  elevated:     '#d97706',
+  low:          '#1b7a4a',
+  intermediate: '#b45309',
+  elevated:     '#c0392b',
 };
 
 const TIER_LABELS = {
-  low:          'Low — Routine Screening',
-  intermediate: 'Intermediate — Consider PSA Discussion',
-  elevated:     'Strong Candidate for PSA Testing',
+  low:          'Lower Priority — Routine Screening',
+  intermediate: 'Worth Discussing With Your Doctor',
+  elevated:     'Strongly Consider Testing Soon',
 };
 
 function fmtRace(v) {
@@ -25,7 +27,7 @@ function fmtFH(v) {
     ?? { 0: 'None', 1: '1 first-degree relative', 2: '2+ first-degree relatives' }[v] ?? v ?? '—';
 }
 function fmtExercise(v) {
-  return { 0: 'Regular (≥150 min/wk)', 1: 'Some (<150 min/wk)', 2: 'None' }[String(v)] ?? v ?? '—';
+  return { 0: 'Regular (3+ days/wk, 1+ hour)', 1: 'Moderate (1-2 days/wk, 1+ hour)', 2: 'Sedentary (rarely or never)' }[String(v)] ?? v ?? '—';
 }
 function fmtSmoking(v) {
   return { 0: 'Never', 1: 'Former', 2: 'Current' }[String(v)] ?? v ?? '—';
@@ -42,6 +44,13 @@ function fmtComorbidities(v) {
     0: 'None', 1: 'One', 2: 'Two or more' }[String(v)] ?? v ?? '—';
 }
 function fmtYnu(v) { return { yes: 'Yes', no: 'No', unknown: 'Unknown' }[v] ?? v ?? '—'; }
+function fmtBrca(v) {
+  return {
+    yes: 'Positive', no: 'Negative', unknown: 'Unknown / not tested',
+    other_elevated: 'Not tested — elevated by family history (breast/pancreatic)',
+    other_unknown: 'Unknown', lynch: 'Positive (Lynch syndrome)', positive: 'Positive', negative: 'Negative',
+  }[v] ?? v ?? '—';
+}
 function fmtEthnicity(v) {
   return { 'hispanic-latino': 'Hispanic / Latino', 'not-hispanic-latino': 'Not Hispanic / Latino', unknown: 'Unknown' }[v] ?? v ?? '—';
 }
@@ -68,7 +77,9 @@ function buildRows(formData, rawAnswers) {
     { label: 'Race',                value: fmtRace(f.race ?? a.race) },
     { label: 'Ethnicity',           value: fmtEthnicity(f.ethnicity ?? a.ethnicity) },
     { label: 'Family history',      value: fmtFH(a.familyHistory ?? f.familyHistory) },
-    { label: 'BRCA2 / Lynch status',value: fmtYnu(f.brcaStatus ?? a.brca) },
+    { label: 'Family history of breast cancer',    value: fmtYnu(a.familyHistoryBreastCancer ?? f.familyHistoryBreastCancer) },
+    { label: 'Family history of pancreatic cancer',value: fmtYnu(a.familyHistoryPancreaticCancer ?? f.familyHistoryPancreaticCancer) },
+    { label: 'BRCA2 / Lynch status',value: fmtBrca(f.brcaStatus ?? a.brca) },
     { label: 'Height',              value: height },
     { label: 'Weight',              value: weight },
     { label: 'BMI',                 value: bmiLabel },
@@ -80,10 +91,11 @@ function buildRows(formData, rawAnswers) {
     { label: 'Erectile function',   value: fmtShim(a.shim ?? f.shim?.[0]) },
     ...(f.inflammationHistory ? [{ label: 'Inflammation / prostatitis history', value: f.inflammationHistory === 1 ? 'Yes' : 'No' }] : []),
     ...(f.chemicalExposure && f.chemicalExposure !== 'no' ? [{ label: 'Chemical / occupational exposure', value: f.chemicalExposure }] : []),
+    ...(a.psaKnown ? [{ label: 'Knows PSA level', value: a.psaKnown === 'yes' ? `Yes (${a.psaValue ?? '—'} ng/mL)` : 'No' }] : []),
   ];
 }
 
-const ClinicalModeResultPrint = ({ result, formData, rawAnswers, sessionRef, onBack }) => {
+const ClinicalModeResultPrint = ({ result, postResult = null, formData, rawAnswers, sessionRef, onBack }) => {
   const printRef = useRef(null);
 
   const tierKey   = result?.epsaTierKey ?? 'intermediate';
@@ -159,6 +171,35 @@ const ClinicalModeResultPrint = ({ result, formData, rawAnswers, sessionRef, onB
             <p className="cmrp-tier-body">{result.epsaGuidelineText}</p>
           )}
         </div>
+
+        {/* Self-reported PSA + combined risk */}
+        {postResult && (
+          <div className="cmrp-tier-block" style={{ borderLeft: '4px solid #2563eb', marginTop: '0.75rem' }}>
+            <div className="cmrp-tier-eyebrow">Combined Risk (Questionnaire + PSA)</div>
+            <div className="cmrp-tier-label" style={{ color: '#1f2937', fontSize: '1rem' }}>
+              PSA: {postResult.psaValue} ng/mL{postResult.psaTier ? ` (${postResult.psaTier})` : ''} · {postResult.riskCat}
+            </div>
+            {postResult.guidelineText && <p className="cmrp-tier-body">{postResult.guidelineText}</p>}
+            {postResult.lowPsaWarningText && <p className="cmrp-tier-body"><strong>Note:</strong> {postResult.lowPsaWarningText}</p>}
+            {postResult.discordanceFlag?.text && <p className="cmrp-tier-body"><strong>Note:</strong> {postResult.discordanceFlag.text}</p>}
+            {postResult.mriRecommendMessage && <p className="cmrp-tier-body"><strong>Note:</strong> {postResult.mriRecommendMessage}</p>}
+          </div>
+        )}
+
+        {/* Internal risk model vs. guideline-criteria mismatch — kept visible
+            and distinctly labeled, never merged into the guideline verdict. */}
+        {(tierKey === 'elevated' || result?.recommendPSA === true) &&
+          typeof result?.psaGuidelineSupportCount === 'number' &&
+          result.psaGuidelineSupportCount === 0 && (
+          <div className="cmrp-tier-block" style={{ borderLeft: '4px solid #d97706', color: '#92400e' }}>
+            <div className="cmrp-tier-eyebrow">Internal Risk Model vs. Screening Guidelines — Not the Same Signal</div>
+            <p className="cmrp-tier-body"><strong>ePSA internal risk assessment:</strong> Strong Candidate for PSA Testing (based on risk factors).</p>
+            <p className="cmrp-tier-body"><strong>Formal guideline status:</strong> Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.</p>
+            <p className="cmrp-tier-body">
+              Based on these risk factors, the patient may benefit from discussing PSA testing with a physician, even though standard age-based screening guideline criteria are not currently met. This is not a substitute for guideline-based screening recommendations — individual risk should be discussed with a healthcare provider.
+            </p>
+          </div>
+        )}
 
         {/* Answers table */}
         <div className="cmrp-section-title">Submitted Answers</div>

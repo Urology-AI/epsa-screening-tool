@@ -125,6 +125,28 @@ const ClinicalModePrintForm = ({ onBack, answers = {} }) => {
           <div className="form-row">
             <div className="form-field-inline">
               <label className="field-label-inline">
+                <span className="field-number">3b.</span> {t('part1.fields.familyHistoryBreastCancer.title')}:
+                <label className="checkbox-inline"><input type="radio" name="familyBreast" value="no"      defaultChecked={chk('familyHistoryBreastCancer', 'no')} /> {t('part1.options.no')}</label>
+                <label className="checkbox-inline"><input type="radio" name="familyBreast" value="yes"     defaultChecked={chk('familyHistoryBreastCancer', 'yes')} /> {t('part1.options.yes')}</label>
+                <label className="checkbox-inline"><input type="radio" name="familyBreast" value="unknown" defaultChecked={chk('familyHistoryBreastCancer', 'unknown')} /> {t('part1.options.unknown')}</label>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field-inline">
+              <label className="field-label-inline">
+                <span className="field-number">3c.</span> {t('part1.fields.familyHistoryPancreaticCancer.title')}:
+                <label className="checkbox-inline"><input type="radio" name="familyPancreatic" value="no"      defaultChecked={chk('familyHistoryPancreaticCancer', 'no')} /> {t('part1.options.no')}</label>
+                <label className="checkbox-inline"><input type="radio" name="familyPancreatic" value="yes"     defaultChecked={chk('familyHistoryPancreaticCancer', 'yes')} /> {t('part1.options.yes')}</label>
+                <label className="checkbox-inline"><input type="radio" name="familyPancreatic" value="unknown" defaultChecked={chk('familyHistoryPancreaticCancer', 'unknown')} /> {t('part1.options.unknown')}</label>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field-inline">
+              <label className="field-label-inline">
                 <span className="field-number">12.</span> {t('part1.fields.brcaStatus.title')} <span className="pf-guideline-badge">{t('part1.guideline.badge')}</span>:
                 <label className="checkbox-inline"><input type="radio" name="brca" value="no"      defaultChecked={chk('brca', 'no')} /> {t('part1.options.no')}</label>
                 <label className="checkbox-inline"><input type="radio" name="brca" value="yes"     defaultChecked={chk('brca', 'yes')} /> {t('part1.options.yes')}</label>

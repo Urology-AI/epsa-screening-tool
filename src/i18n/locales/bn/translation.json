@@ -405,6 +405,16 @@
         "helper": "আপনি কি বংশগত প্রোস্টেট ক্যান্সার জিন পরিবর্তনের (BRCA1/2, HOXB13, ATM বা Lynch সিন্ড্রোমের মতো) জিনগত পরীক্ষা করেছেন? শুধুমাত্র তখন হ্যাঁ বেছে নিন যদি পরীক্ষায় নিশ্চিত হয় যে আপনি একটি বহন করেন।",
         "description": "কিছু বংশগত জিন পরিবর্তন প্রোস্টেট ক্যান্সারের ঝুঁকি বাড়ায়। BRCA2 উচ্চ ঝুঁকি এবং আরও আক্রমণাত্মক রোগের সাথে যুক্ত। AUA, NCCN এবং EAU নির্দেশিকা আগে এবং আরও ঘন ঘন PSA স্ক্রিনিং সুপারিশ করে যদি পরীক্ষায় নিশ্চিত হয় যে আপনি একটি বহন করেন।"
       },
+      "psaKnown": {
+        "title": "আপনি কি আপনার PSA স্তর জানেন?",
+        "helper": "আপনি যদি আগে PSA রক্ত পরীক্ষা করিয়ে থাকেন এবং ফলাফল জানেন, তাহলে আপনার ঝুঁকি অনুমান আরও নির্ভুল করতে নিচে তা লিখতে পারেন।",
+        "description": "PSA (প্রোস্টেট-স্পেসিফিক অ্যান্টিজেন) একটি সাধারণ রক্ত পরীক্ষার মাধ্যমে পরিমাপ করা হয়। জানা ফলাফল লিখলে টুলটি এটিকে আপনার অন্যান্য ঝুঁকি বিষয়ের সাথে মিলিয়ে আরও নির্ভুল অনুমান দিতে পারে।"
+      },
+      "psaValue": {
+        "title": "PSA মান (ng/mL)",
+        "placeholder": "যেমন 4.2",
+        "helper": "আপনার সাম্প্রতিকতম PSA পরীক্ষার ফলাফল লিখুন, ন্যানোগ্রাম প্রতি মিলিলিটার (ng/mL) এককে।"
+      },
       "heightWeight": {
         "title": "উচ্চতা ও ওজন (BMI)",
         "description": "অতিরিক্ত ওজন আক্রমণাত্মক প্রোস্টেট ক্যান্সারের উচ্চ সম্ভাবনার সাথে যুক্ত। অতিরিক্ত লম্বা হওয়াও ঝুঁকি সামান্য বাড়াতে পারে।"
@@ -526,13 +536,13 @@
       "toggleShort": "সংক্ষিপ্ত সংস্করণ ব্যবহার করুন (একক তীব্রতা প্রশ্ন)",
       "toggleFull": "সম্পূর্ণ SHIM ব্যবহার করুন (৫ প্রশ্ন)",
       "skip": "এড়িয়ে যান — কোনো ইরেকটাইল উদ্বেগ নেই",
-      "singleQuestionLabel": "সামগ্রিকভাবে, গত ৬ মাসে আপনার ইরেকটাইল ফাংশন কেমন ছিল?",
+      "singleQuestionLabel": "গত ৬ মাসে, ইরেকশন পাওয়ার আপনার সক্ষমতা আপনি কীভাবে বর্ণনা করবেন?",
       "options": {
-        "none": "কোনো ইরেকটাইল ডিসফাংশন নেই",
-        "mild": "মৃদু ED",
-        "mildModerate": "মৃদু-মাঝারি ED",
-        "moderate": "মাঝারি ED",
-        "severe": "তীব্র ED"
+        "none": "কোনো সমস্যা নেই — সহজে পাওয়া গেছে",
+        "mild": "সহজে পাওয়া গেছে, মাঝে মাঝে সামান্য অসুবিধা সহ",
+        "mildModerate": "পাওয়া গেছে, তবে কিছুটা অসুবিধা সহ",
+        "moderate": "উল্লেখযোগ্য অসুবিধা সহ পাওয়া গেছে",
+        "severe": "খুব কম বা কখনোই ইরেকশন পাওয়া যায়নি"
       }
     },
     "abnormalPsaLikelihood": "অস্বাভাবিক PSA / csPCa-এর আনুমানিক সম্ভাবনা:",
@@ -632,9 +642,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "নিয়মিত (সপ্তাহে ৩+ দিন)",
-        "some": "কিছুটা (সপ্তাহে ১-২ দিন)",
-        "none": "কোনোটিই নয়"
+        "regular": "নিয়মিত (সপ্তাহে ৩+ দিন, কমপক্ষে ১ ঘণ্টা)",
+        "some": "মধ্যম (সপ্তাহে ১-২ দিন, কমপক্ষে ১ ঘণ্টা)",
+        "none": "নিষ্ক্রিয় (কদাচিৎ বা কখনো না)"
       },
       "smoking": {
         "current": "বর্তমান",
@@ -766,7 +776,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA স্তর"
+        "sectionTitle": "PSA পরীক্ষার ইতিহাস"
       },
       "mri": {
         "sectionTitle": "MRI ফলাফল (ঐচ্ছিক)"
@@ -782,24 +792,14 @@
       "calculate": "ঝুঁকি মূল্যায়ন গণনা করুন ✓"
     },
     "psa": {
-      "sectionTitle": "PSA স্তর",
-      "q1": "আপনি কি আপনার PSA স্তর জানেন?",
-      "q1OptNo": "না, আমি আমার PSA জানি না",
-      "q1OptYes": "হ্যাঁ, আমি আমার PSA স্তর জানি",
-      "q2": "PSA স্তর লিখুন (ng/mL)",
-      "psaPlaceholder": "PSA স্তর (০.১-১০০)",
-      "psaInvalidValidity": "PSA স্তর ০.১ এবং ১০০ ng/mL এর মধ্যে হতে হবে",
-      "psaInvalid": "PSA স্তর ০.১ এবং ১০০ ng/mL এর মধ্যে হতে হবে",
-      "psaNote": "PSA (Prostate-Specific Antigen) হল প্রোস্টেট ক্যান্সার স্ক্রিনিং করতে ব্যবহৃত একটি রক্ত পরীক্ষা।",
-      "q3": "আপনি কি কোনো হরমোনাল ওষুধ খাচ্ছেন যা PSA প্রভাবিত করতে পারে?",
-      "q3InfoTitle": "finasteride (Propecia/Proscar), dutasteride (Avodart) বা অন্যান্য 5-alpha reductase inhibitor-এর মতো ওষুধ PSA স্তর প্রায় ৫০% কমাতে পারে।",
-      "q3OptNo": "না / নিশ্চিত নই",
-      "q3OptYes": "হ্যাঁ, আমি হরমোনাল থেরাপি নিচ্ছি",
-      "q4Label": "কোন ওষুধ? (ঐচ্ছিক)",
-      "q4OptFinasteride": "Finasteride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasteride (Avodart)",
-      "q4OptOther": "অন্যান্য / নিশ্চিত নই",
-      "q4Note": "নোট: এই ওষুধগুলি PSA প্রায় ৫০% কমাতে পারে। সঠিক ব্যাখ্যার জন্য আপনার ডাক্তারকে PSA মান সামঞ্জস্য করতে হতে পারে।"
+      "sectionTitle": "PSA পরীক্ষার ইতিহাস",
+      "q1": "আপনি কি এর আগে কখনো PSA পরীক্ষা করিয়েছেন?",
+      "q1OptYes": "হ্যাঁ",
+      "q1OptNo": "না",
+      "q2": "আপনার PSA স্তর কি স্বাভাবিক ছিল নাকি উচ্চ ছিল?",
+      "q2OptNormal": "স্বাভাবিক",
+      "q2OptElevated": "উচ্চ",
+      "q2OptNotSure": "নিশ্চিত নই"
     },
     "mri": {
       "sectionTitle": "MRI ফলাফল (ঐচ্ছিক)",
@@ -844,6 +844,10 @@
     "timelineOngoingDesc": "আপনার স্বাস্থ্যের অবস্থা পরিবর্তন হলে ePSA দিয়ে পুনরায় মূল্যায়ন করুন",
     "highRiskNoticeStrong": "নির্দেশিকা-স্বীকৃত ঝুঁকির কারণ পাওয়া গেছে।",
     "highRiskNoticeBody": "আপনার স্কোর উচ্চ পরিসরে এবং আপনার কমপক্ষে একটি নির্দেশিকা-স্বীকৃত ঝুঁকির কারণ রয়েছে (বয়স ≥৭০, কালো বংশ, প্রথম-ডিগ্রি পারিবারিক ইতিহাস, বংশগত জিনগত মিউটেশন বা একাধিক কমরবিডিটি)। আগে মূল্যায়ন সুপারিশ করা হয়।",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "আপনার PSA জানেন? আরও সম্পূর্ণ চিত্রের জন্য যোগ করুন।",
     "psaCtaDesc": "এই বেসলাইনের সাথে আপনার PSA ফলাফল একত্রিত করলে একটি সম্পূর্ণ ePSA মূল্যায়ন পাবেন।",
     "psaCtaButton": "PSA ফলাফল যোগ করুন",
@@ -1243,9 +1247,9 @@
     "defaultsHint": "ব্যবহার করছেন: ধূমপান = কখনো না, খাদ্য = নিয়মিত (পশ্চিমা), রাসায়নিক এক্সপোজার = না, জেনেটিক মিউটেশন = না, প্রদাহ = না, কমরবিডিটি = কোনোটিই নয়, ব্যায়াম = নিয়মিত।",
     "exerciseLabel": "ব্যায়ামের মাত্রা",
     "exercise": {
-      "regular": "নিয়মিত (সপ্তাহে ৩+ দিন)",
-      "some": "কিছুটা (সপ্তাহে ১-২ দিন)",
-      "none": "কোনোটিই নয়"
+      "regular": "নিয়মিত (সপ্তাহে ৩+ দিন, কমপক্ষে ১ ঘণ্টা)",
+      "some": "মধ্যম (সপ্তাহে ১-২ দিন, কমপক্ষে ১ ঘণ্টা)",
+      "none": "নিষ্ক্রিয় (কদাচিৎ বা কখনো না)"
     },
     "comorbiditiesLabel": "কমরবিডিটি",
     "comorbidities": {

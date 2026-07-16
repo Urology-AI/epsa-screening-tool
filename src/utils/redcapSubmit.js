@@ -27,12 +27,18 @@ const RACE_MAP = {
   'other':           6,
 };
 
+// 'other_elevated'/'lynch'/'other_unknown' cover cases where no confirmed genetic
+// test was done, but a BRCA-linked family history (breast/pancreatic cancer) or
+// other hereditary signal elevates risk — treated as positive/elevated for REDCap.
 const GENETIC_RISK_MAP = {
-  'yes':      1,
-  'positive': 1,
-  'no':       2,
-  'negative': 2,
-  'unknown':  3,
+  'yes':            1,
+  'positive':       1,
+  'lynch':          1,
+  'other_elevated': 1,
+  'no':             2,
+  'negative':       2,
+  'unknown':        3,
+  'other_unknown':  3,
 };
 
 // chemical_exposure: app uses 'no'/'wtc_911'; REDCap uses 'none'/'nine_eleven'

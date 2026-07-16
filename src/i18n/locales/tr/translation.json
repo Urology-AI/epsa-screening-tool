@@ -405,6 +405,16 @@
         "helper": "Kalıtsal prostat kanseri gen değişiklikleri (BRCA1/2, HOXB13, ATM veya Lynch sendromu gibi) için genetik test yaptırdınız mı? Yalnızca bir testle taşıdığınız doğrulandıysa Evet seçin. Test yapıldıysa ve hiçbir şey bulunmadıysa Hayır seçin. Hiç test yaptırmadıysanız Bilinmiyor seçin.",
         "description": "Bazı kalıtsal gen değişiklikleri prostat kanseri riskini artırır. BRCA2 daha yüksek risk ve daha agresif hastalıkla ilişkilidir. HOXB13 (özellikle G84E varyantı) bazı ailelerde görülür ve riski artırır. ATM ve Lynch sendromu genleri de riski artırır. AUA, NCCN ve EAU kılavuzları, bir testle taşıdığınız doğrulandıysa daha erken ve daha sık PSA taraması önerir."
       },
+      "psaKnown": {
+        "title": "PSA Düzeyinizi Biliyor musunuz?",
+        "helper": "Daha önce PSA kan testi yaptırdıysanız ve sonucu biliyorsanız, risk tahmininizi daha isabetli hale getirmek için aşağıya girebilirsiniz.",
+        "description": "PSA (Prostata Özgü Antijen) basit bir kan testiyle ölçülür. Bilinen bir sonucu girmek, aracın bunu diğer risk faktörlerinizle birleştirerek daha isabetli bir tahmin sunmasını sağlar."
+      },
+      "psaValue": {
+        "title": "PSA Değeri (ng/mL)",
+        "placeholder": "örn. 4,2",
+        "helper": "En son PSA test sonucunuzu, mililitre başına nanogram (ng/mL) cinsinden girin."
+      },
       "heightWeight": {
         "title": "Boy ve Kilo (BMI)",
         "description": "Fazla kilolu olmak, agresif prostat kanseri olasılığının daha yüksek olmasıyla ilişkilidir. Çok uzun boylu olmak da riski hafifçe artırabilir."
@@ -526,13 +536,13 @@
       "toggleShort": "Kısa sürümü kullan (tek şiddet sorusu)",
       "toggleFull": "Tam SHIM'i kullan (5 soru)",
       "skip": "Atla — ereksiyon sorunu yok",
-      "singleQuestionLabel": "Genel olarak, son 6 aydaki ereksiyon işlevinizi nasıl tanımlarsınız?",
+      "singleQuestionLabel": "Son 6 ayda, ereksiyon olma yeteneğinizi nasıl tanımlarsınız?",
       "options": {
-        "none": "Ereksiyon sorunu yok",
-        "mild": "Hafif ED",
-        "mildModerate": "Hafif–Orta ED",
-        "moderate": "Orta ED",
-        "severe": "Şiddetli ED"
+        "none": "Sorun yok — kolayca sağlandı",
+        "mild": "Kolayca sağlandı, ara sıra hafif zorlukla",
+        "mildModerate": "Sağlandı, ama biraz zorlukla",
+        "moderate": "Önemli zorlukla sağlandı",
+        "severe": "Nadiren veya hiç ereksiyon sağlanamadı"
       }
     },
     "abnormalPsaLikelihood": "Anormal PSA / csPCa tahmini olasılığı:",
@@ -632,9 +642,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "Düzenli (haftada 3+ gün)",
-        "some": "Biraz (haftada 1-2 gün)",
-        "none": "Hiç"
+        "regular": "Düzenli (haftada 3+ gün, ≥1 saat)",
+        "some": "Orta düzey (haftada 1-2 gün, ≥1 saat)",
+        "none": "Hareketsiz (nadiren veya hiç)"
       },
       "smoking": {
         "current": "Hâlâ içiyor",
@@ -762,7 +772,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA Düzeyi"
+        "sectionTitle": "PSA Test Geçmişi"
       },
       "mri": {
         "sectionTitle": "MRI Sonuçları (İsteğe Bağlı)"
@@ -778,24 +788,14 @@
       "calculate": "Risk Değerlendirmesini Hesapla ✓"
     },
     "psa": {
-      "sectionTitle": "PSA Düzeyi",
-      "q1": "PSA düzeyinizi biliyor musunuz?",
-      "q1OptNo": "Hayır, PSA'mı bilmiyorum",
-      "q1OptYes": "Evet, PSA düzeyimi biliyorum",
-      "q2": "PSA Düzeyini Girin (ng/mL)",
-      "psaPlaceholder": "PSA düzeyi (0.1-100)",
-      "psaInvalidValidity": "PSA düzeyi 0.1 ile 100 ng/mL arasında olmalıdır",
-      "psaInvalid": "PSA düzeyi 0.1 ile 100 ng/mL arasında olmalıdır",
-      "psaNote": "PSA (Prostata Özgü Antijen), prostat kanseri taraması için kullanılan bir kan testidir.",
-      "q3": "PSA'yı etkileyebilecek hormonal ilaçlar kullanıyor musunuz?",
-      "q3InfoTitle": "Finasterid (Propecia/Proscar), dutasterid (Avodart) veya diğer 5-alfa redüktaz inhibitörleri gibi ilaçlar PSA düzeylerini yaklaşık %50 düşürebilir. Bu, doğru risk değerlendirmesi için önemlidir.",
-      "q3OptNo": "Hayır / Emin değilim",
-      "q3OptYes": "Evet, hormon tedavisi alıyorum",
-      "q4Label": "Hangi ilaç? (isteğe bağlı)",
-      "q4OptFinasteride": "Finasterid (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasterid (Avodart)",
-      "q4OptOther": "Diğer / Emin değilim",
-      "q4Note": "Not: Bu ilaçlar PSA'yı yaklaşık %50 düşürebilir. Doktorunuzun doğru yorumlama için PSA değerini ayarlaması gerekebilir."
+      "sectionTitle": "PSA Test Geçmişi",
+      "q1": "Daha önce PSA testi yaptırdınız mı?",
+      "q1OptYes": "Evet",
+      "q1OptNo": "Hayır",
+      "q2": "PSA düzeyiniz normal miydi yoksa yüksek miydi?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Yüksek",
+      "q2OptNotSure": "Emin değilim"
     },
     "mri": {
       "sectionTitle": "MRI Sonuçları (İsteğe Bağlı)",
@@ -843,6 +843,10 @@
     "timelineOngoingDesc": "Sağlık durumunuz değişirse ePSA ile yeniden değerlendirin",
     "highRiskNoticeStrong": "Kılavuz tarafından tanınan risk faktörleri tespit edildi.",
     "highRiskNoticeBody": "Puanınız daha yüksek aralıkta ve kılavuz tarafından tanınan en az bir risk faktörünüz bulunmaktadır (yaş ≥70, Siyah ırk kökeni, birinci derece aile öyküsü, kalıtsal genetik mutasyon veya çoklu eşlik eden hastalıklar). Erken değerlendirme önerilmektedir.",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "PSA değerinizi biliyor musunuz? Daha eksiksiz bir tablo için ekleyin.",
     "psaCtaDesc": "PSA sonucunuzu bu temel değerlendirmeyle birleştirmek, MRI önerilip önerilmediği dahil tam bir ePSA değerlendirmesi sunar.",
     "psaCtaButton": "PSA sonucu ekle",
@@ -1243,9 +1247,9 @@
     "defaultsHint": "Kullanılıyor: Sigara = Hiç içmedi, Beslenme = Düzenli (Batı), Kimyasal maruziyet = Hayır, Genetik mutasyon = Hayır, İltihaplanma = Hayır, Eşlik eden hastalıklar = Yok, Egzersiz = Düzenli.",
     "exerciseLabel": "Egzersiz düzeyi",
     "exercise": {
-      "regular": "Düzenli (haftada 3+ gün)",
-      "some": "Biraz (haftada 1-2 gün)",
-      "none": "Hiç"
+      "regular": "Düzenli (haftada 3+ gün, ≥1 saat)",
+      "some": "Orta düzey (haftada 1-2 gün, ≥1 saat)",
+      "none": "Hareketsiz (nadiren veya hiç)"
     },
     "comorbiditiesLabel": "Eşlik eden hastalıklar",
     "comorbidities": {

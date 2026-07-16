@@ -402,6 +402,16 @@
         "helper": "Count close blood relatives, such as a father, brother, or son, who have had prostate cancer.",
         "description": "Having a father or brother with prostate cancer more than doubles a man's risk. The risk is even higher with multiple affected relatives."
       },
+      "familyHistoryBreastCancer": {
+        "title": "Family History of Breast Cancer",
+        "helper": "Has a close blood relative (parent, sibling, or child) had breast cancer?",
+        "description": "Breast cancer in the family can point to an inherited BRCA1/BRCA2 mutation, which also raises prostate cancer risk and its aggressiveness."
+      },
+      "familyHistoryPancreaticCancer": {
+        "title": "Family History of Pancreatic Cancer",
+        "helper": "Has a close blood relative (parent, sibling, or child) had pancreatic cancer?",
+        "description": "Pancreatic cancer in the family can point to an inherited BRCA1/BRCA2 mutation, which also raises prostate cancer risk and its aggressiveness."
+      },
       "inflammationHistory": {
         "title": "Inflammation History",
         "description": "Long-lasting inflammation in the body — such as prostate inflammation (prostatitis) or inflammatory bowel disease (ulcerative colitis, Crohn's) — may raise prostate cancer risk over time."
@@ -410,6 +420,16 @@
         "title": "Hereditary Cancer Gene Testing",
         "helper": "Have you had a genetic test for hereditary prostate cancer gene changes (like BRCA1/2, HOXB13, ATM, or Lynch syndrome)? Pick Yes only if a test confirmed you carry one. Pick No if you were tested and nothing was found. Pick Unknown if you've never been tested.",
         "description": "Some inherited gene changes raise prostate cancer risk. BRCA2 is linked to higher risk and more aggressive disease. HOXB13 (especially the G84E version) runs in some families and also raises risk. ATM and Lynch-syndrome genes also raise risk. AUA, NCCN, and EAU guidelines recommend earlier and more frequent PSA screening if a test has confirmed you carry one."
+      },
+      "psaKnown": {
+        "title": "Do You Know Your PSA Level?",
+        "helper": "If you've had a PSA blood test before and know the result, you can enter it below to refine your risk estimate.",
+        "description": "PSA (Prostate-Specific Antigen) is measured with a simple blood test. Entering a known result lets the tool combine it with your other risk factors for a more precise estimate."
+      },
+      "psaValue": {
+        "title": "PSA Value (ng/mL)",
+        "placeholder": "e.g. 4.2",
+        "helper": "Enter your most recent PSA test result, in nanograms per milliliter (ng/mL)."
       },
       "heightWeight": {
         "title": "Height & Weight (BMI)",
@@ -530,14 +550,14 @@
     "shimShort": {
       "toggleShort": "Use short version (single severity question)",
       "toggleFull": "Use full SHIM (5 questions)",
-      "skip": "Skip — no erectile concerns",
-      "singleQuestionLabel": "Overall, how would you describe your erectile function over the past 6 months?",
+      "skip": "Skip — no erection concerns",
+      "singleQuestionLabel": "Over the past 6 months, how would you describe your ability to achieve an erection?",
       "options": {
-        "none": "No erectile dysfunction",
-        "mild": "Mild ED",
-        "mildModerate": "Mild–Moderate ED",
-        "moderate": "Moderate ED",
-        "severe": "Severe ED"
+        "none": "No problems — achieved easily",
+        "mild": "Achieved easily, with slight difficulty at times",
+        "mildModerate": "Achieved, but with some difficulty",
+        "moderate": "Achieved with significant difficulty",
+        "severe": "Rarely or never able to achieve an erection"
       }
     },
     "abnormalPsaLikelihood": "Estimated likelihood of an abnormal PSA / csPCa:",
@@ -637,9 +657,9 @@
     },
     "step3": {
       "exercise": {
-        "regular": "Regular (3+ days/week)",
-        "some": "Some (1-2 days/week)",
-        "none": "None"
+        "regular": "Regular (3+ days/week, 1+ hour)",
+        "some": "Moderate (1-2 days/week, 1+ hour)",
+        "none": "Sedentary (rarely or never)"
       },
       "smoking": {
         "current": "Current",
@@ -766,7 +786,7 @@
     },
     "steps": {
       "psa": {
-        "sectionTitle": "PSA Level"
+        "sectionTitle": "PSA Testing History"
       },
       "mri": {
         "sectionTitle": "MRI Results (Optional)"
@@ -782,24 +802,14 @@
       "calculate": "Calculate Risk Assessment ✓"
     },
     "psa": {
-      "sectionTitle": "PSA Level",
-      "q1": "Do you know your PSA level?",
-      "q1OptNo": "No, I don't know my PSA",
-      "q1OptYes": "Yes, I know my PSA level",
-      "q2": "Enter PSA Level (ng/mL)",
-      "psaPlaceholder": "PSA level (0.1-100)",
-      "psaInvalidValidity": "PSA level must be between 0.1 and 100 ng/mL",
-      "psaInvalid": "PSA level must be between 0.1 and 100 ng/mL",
-      "psaNote": "PSA (Prostate-Specific Antigen) is a blood test used to screen for prostate cancer.",
-      "q3": "Are you taking any hormonal medications that may affect PSA?",
-      "q3InfoTitle": "Medications like finasteride (Propecia/Proscar), dutasteride (Avodart), or other 5-alpha reductase inhibitors can lower PSA levels by approximately 50%. This is important for accurate risk assessment.",
-      "q3OptNo": "No / Not sure",
-      "q3OptYes": "Yes, I'm taking hormonal therapy",
-      "q4Label": "Which medication? (optional)",
-      "q4OptFinasteride": "Finasteride (Propecia/Proscar)",
-      "q4OptDutasteride": "Dutasteride (Avodart)",
-      "q4OptOther": "Other / Not sure",
-      "q4Note": "Note: These medications can lower PSA by ~50%. Your doctor may need to adjust the PSA value for accurate interpretation."
+      "sectionTitle": "PSA Testing History",
+      "q1": "Have you ever been tested for PSA before?",
+      "q1OptYes": "Yes",
+      "q1OptNo": "No",
+      "q2": "Was your PSA level normal or elevated?",
+      "q2OptNormal": "Normal",
+      "q2OptElevated": "Elevated",
+      "q2OptNotSure": "Not sure"
     },
     "mri": {
       "sectionTitle": "MRI Results (Optional)",
@@ -844,6 +854,10 @@
     "timelineOngoingDesc": "Re-assess with ePSA if your health status changes",
     "highRiskNoticeStrong": "Guideline-recognised risk factors detected.",
     "highRiskNoticeBody": "Your score is in the higher range and you have at least one guideline-recognised risk factor (age ≥70, Black ancestry, first-degree family history, hereditary genetic mutation, or multiple comorbidities). Earlier evaluation is recommended.",
+    "riskModelVsGuidelineEyebrow": "Internal Risk Model vs. Screening Guidelines — Not the Same Signal",
+    "riskModelVsGuidelineInternal": "ePSA internal risk assessment: Strong Candidate for PSA Testing (based on your risk factors).",
+    "riskModelVsGuidelineFormal": "Formal guideline status: Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.",
+    "riskModelVsGuidelineBody": "Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.",
     "psaCtaTitle": "Know your PSA? Add it for a more complete picture.",
     "psaCtaDesc": "Combining your PSA result with this baseline gives you a full ePSA assessment — including whether an MRI is recommended.",
     "psaCtaButton": "Add PSA result",
@@ -1250,9 +1264,9 @@
     "defaultsHint": "Using: Smoking = Never, Diet = Regular (Western), Chemical exposure = No, Genetic mutation = No, Inflammation = No, Comorbidities = None, Exercise = Regular.",
     "exerciseLabel": "Exercise level",
     "exercise": {
-      "regular": "Regular (3+ days/week)",
-      "some": "Some (1-2 days/week)",
-      "none": "None"
+      "regular": "Regular (3+ days/week, 1+ hour)",
+      "some": "Moderate (1-2 days/week, 1+ hour)",
+      "none": "Sedentary (rarely or never)"
     },
     "comorbiditiesLabel": "Comorbidities",
     "comorbidities": {

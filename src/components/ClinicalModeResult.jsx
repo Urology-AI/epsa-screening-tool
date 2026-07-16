@@ -18,12 +18,6 @@ function mapRawToGauge(raw, max, fallback) {
   return Math.round(67 + ((c - 18) / Math.max(1, max - 18)) * 33);
 }
 
-const CATEGORIES = [
-  { key: 'low',          label: 'Low — Routine Screening',              color: '#16a34a' },
-  { key: 'intermediate', label: 'Intermediate — Consider PSA Discussion', color: '#2563eb' },
-  { key: 'elevated',     label: 'Strong Candidate for PSA Testing',      color: '#d97706' },
-];
-
 function downloadJson(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -34,7 +28,7 @@ function downloadJson(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-export default function ClinicalModeResult({ result, answers, formData, onEditAnswers, onStartOver, onContinue, onStudyConsent, onConsentNow, readOnly = false, sessionRef, cloudStatus = null, consented = null }) {
+export default function ClinicalModeResult({ result, postResult = null, answers, formData, onEditAnswers, onStartOver, onContinue, onStudyConsent, onConsentNow, readOnly = false, sessionRef, cloudStatus = null, consented = null }) {
   const [showAll, setShowAll] = useState(false);
   const [showPrintForm, setShowPrintForm] = useState(false);
   const [showResultPrint, setShowResultPrint] = useState(false);
@@ -60,6 +54,7 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
     return (
       <ClinicalModeResultPrint
         result={result}
+        postResult={postResult}
         formData={formData}
         rawAnswers={answers}
         sessionRef={sessionRef}
@@ -72,6 +67,7 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
     epsaTierKey, epsaTierLabel, epsaGuidelineText,
     itemImpacts = [], score, calculationDetails,
     aboveMaxScreeningAge,
+    psaGuidelineSupportCount, psaRecommendReason, recommendPSA,
   } = result;
 
   const gaugeScore = mapRawToGauge(
@@ -82,6 +78,21 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
 
   const isHigher = epsaTierKey === 'elevated';
   const isLower  = epsaTierKey === 'low';
+
+  // ── Internal risk model vs. formal screening-guideline criteria ──
+  // The ePSA risk model (itemImpacts / epsaTierKey) can flag someone as a
+  // "Strong Candidate for PSA Testing" based on risk factors (family history,
+  // obesity, smoking, sedentary lifestyle, poor urinary symptom scores, etc.)
+  // even when they do not meet formal AUA/NCCN/EAU/ERSPC age-based screening
+  // criteria (e.g., a 40-year-old below the standard screening age window).
+  // `psaGuidelineSupportCount === 0` means none of the four major guidelines
+  // support a PSA recommendation for this specific reason/profile — i.e. the
+  // internal model and the guideline verdict disagree. We surface both
+  // signals distinctly rather than silently upgrading the guideline verdict.
+  const isInternalCandidate = isHigher || recommendPSA === true;
+  const guidelineCriteriaNotMet =
+    typeof psaGuidelineSupportCount === 'number' && psaGuidelineSupportCount === 0;
+  const showRiskModelVsGuidelineNotice = isInternalCandidate && guidelineCriteriaNotMet;
 
   const sorted = [...itemImpacts].sort((a, b) => Number(b.points) - Number(a.points));
   const TOP_N = 5;
@@ -173,20 +184,16 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
         </div>
       )}
 
-      {/* ── Gauge + categories ── */}
+      {/* ── Gauge ──
+          The gauge's own tier legend (inside RiskGauge) already shows the
+          three plain-language priority levels with the active one
+          highlighted, so we don't repeat a second "categories" legend here —
+          that used to duplicate the same three tiers in different wording
+          right below the gauge. */}
       <div className="qer-gauge-section">
+        <h2 className="qer-results-heading">Your Results</h2>
+        <p className="qer-results-subheading">Here's what your answers suggest about PSA testing for you.</p>
         <RiskGauge score={gaugeScore} tierKey={epsaTierKey} tierLabel={epsaTierLabel} />
-        <div className="qer-categories">
-          {CATEGORIES.map(({ key, label, color }) => (
-            <div key={key}
-              className={`qer-cat${epsaTierKey === key ? ' qer-cat--active' : ''}`}
-              style={epsaTierKey === key ? { borderColor: color, color } : {}}
-            >
-              <span className="qer-cat-dot" style={{ background: color }} />
-              {label}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── Guideline recommendation ── */}
@@ -195,12 +202,81 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
         <p className="qer-guideline-body">{guidelineText}</p>
       </div>
 
+      {/* ── Self-reported PSA + combined risk (if the patient entered a known PSA value) ── */}
+      {postResult && (
+        <div className="qer-section">
+          <div className="qer-section-title">
+            <TrendingUpIcon size={13} aria-hidden="true" />
+            Your Reported PSA
+          </div>
+          <div className="qer-factor-list">
+            <div className="qer-factor qer-factor--elevated">
+              <div className="qer-factor-left">
+                <span className="qer-factor-name">PSA level</span>
+                <span className="qer-source-tag qer-source-tag--model">Self-reported</span>
+              </div>
+              <span className="qer-factor-val">
+                {postResult.psaValue} ng/mL{postResult.psaTier ? ` (${postResult.psaTier})` : ''}
+              </span>
+            </div>
+          </div>
+
+          <div className={`qer-guideline-banner qer-guideline-banner--${postResult.epsaTierKey === 'high' || postResult.epsaTierKey === 'intermediate-high' ? 'high' : postResult.epsaTierKey === 'low' ? 'low' : 'moderate'}`}
+            style={{ marginTop: '0.75rem' }}>
+            <div className="qer-guideline-eyebrow">Combined Risk (Questionnaire + PSA)</div>
+            <p className="qer-guideline-body"><strong>{postResult.riskCat}</strong> — {postResult.guidelineText}</p>
+          </div>
+
+          {postResult.lowPsaWarning && (
+            <div className="qer-guideline-banner qer-guideline-banner--high" style={{ marginTop: '0.75rem' }}>
+              <div className="qer-guideline-eyebrow">Important — Low PSA Does Not Rule Out Risk</div>
+              <p className="qer-guideline-body">{postResult.lowPsaWarningText}</p>
+            </div>
+          )}
+
+          {postResult.discordanceFlag && (
+            <div className={`qer-guideline-banner qer-guideline-banner--${postResult.discordanceFlag.severity === 'orange' ? 'high' : 'moderate'}`} style={{ marginTop: '0.75rem' }}>
+              <div className="qer-guideline-eyebrow">Discordance Notice</div>
+              <p className="qer-guideline-body">{postResult.discordanceFlag.text}</p>
+            </div>
+          )}
+
+          {postResult.mriRecommended && (
+            <div className="qer-guideline-banner qer-guideline-banner--moderate" style={{ marginTop: '0.75rem' }}>
+              <div className="qer-guideline-eyebrow">mpMRI Recommended</div>
+              <p className="qer-guideline-body">{postResult.mriRecommendMessage}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Internal risk model vs. guideline-criteria mismatch ──
+          Shown when the ePSA risk model flags the patient as a candidate for
+          PSA testing but formal screening guidelines (AUA/NCCN/EAU/ERSPC) do
+          not currently support that recommendation for this profile/age. Both
+          signals stay visible and clearly labeled — the guideline verdict is
+          never silently overridden. */}
+      {showRiskModelVsGuidelineNotice && (
+        <div className="qer-guideline-banner qer-guideline-banner--moderate qer-model-guideline-mismatch">
+          <div className="qer-guideline-eyebrow">Internal Risk Model vs. Screening Guidelines — Not the Same Signal</div>
+          <p className="qer-guideline-body">
+            <strong>ePSA internal risk assessment:</strong> Strong Candidate for PSA Testing (based on your risk factors).
+          </p>
+          <p className="qer-guideline-body" style={{ marginTop: '0.35rem' }}>
+            <strong>Formal guideline status:</strong> Not met — AUA/NCCN/EAU/ERSPC screening-guideline criteria (e.g. standard screening age) are not currently satisfied.
+          </p>
+          <p className="qer-guideline-body" style={{ marginTop: '0.5rem' }}>
+            Based on your risk factors, you may benefit from discussing PSA testing with your physician, even though you do not currently meet standard age-based screening guideline criteria. This is not a substitute for guideline-based screening recommendations — please discuss your individual risk with a healthcare provider.
+          </p>
+        </div>
+      )}
+
       {/* ── Factors ordered by impact, no points shown ── */}
       {sorted.length > 0 && (
         <div className="qer-section">
           <div className="qer-section-title">
             <TrendingUpIcon size={13} aria-hidden="true" />
-            Risk factors — sorted by impact
+            What's affecting your results
           </div>
           <div className="qer-factor-list">
             {visible.map((f) => {
@@ -235,6 +311,9 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
       <p className="qer-disclaimer" style={{ marginTop: '0.25rem' }}>
         Model trained on Grade Group ≥3 outcome (N=94 cohort). AUA/NCCN define clinically significant cancer as Grade Group ≥2. Validated variables: age, race, family history, PSA thresholds. Other factors are research-based.
       </p>
+      <p className="qer-disclaimer qer-institution-line">
+        Developed by the Department of Urology, Icahn School of Medicine at Mount Sinai · IRB Protocol STUDY-14-00050
+      </p>
 
 
       {!readOnly && cloudStatus === 'saved' && !checklistDone && (
@@ -263,7 +342,7 @@ export default function ClinicalModeResult({ result, answers, formData, onEditAn
             type="button"
             className="qer-action-btn qer-action-btn--secondary"
             onClick={() => downloadJson(
-              { sessionRef, formData, result, rawAnswers: answers, exportedAt: new Date().toISOString() },
+              { sessionRef, formData, result, postResult, rawAnswers: answers, exportedAt: new Date().toISOString() },
               `epsa-results-${sessionRef || Date.now()}.json`
             )}
           >
