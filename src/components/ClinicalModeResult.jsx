@@ -311,6 +311,9 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
       <p className="qer-disclaimer" style={{ marginTop: '0.25rem' }}>
         Model trained on Grade Group ≥3 outcome (N=94 cohort). AUA/NCCN define clinically significant cancer as Grade Group ≥2. Validated variables: age, race, family history, PSA thresholds. Other factors are research-based.
       </p>
+      <p className="qer-disclaimer qer-institution-line">
+        Developed by the Department of Urology, Icahn School of Medicine at Mount Sinai · IRB Protocol STUDY-14-00050
+      </p>
 
 
       {!readOnly && cloudStatus === 'saved' && !checklistDone && (

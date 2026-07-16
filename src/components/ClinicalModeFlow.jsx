@@ -334,6 +334,18 @@ function WelcomeScreen({ onStart, onStaffAccess, onPrintForm, onPrintQr }) {
               <span className="qef-learn-badge">Not a diagnosis</span>
             </div>
           </div>
+
+          <div className="qef-learn-card qef-learn-card--trust">
+            <div className="qef-learn-card-head">
+              <strong>Why trust this tool?</strong>
+            </div>
+            <p>
+              ePSA is developed and maintained by the <strong>Department of Urology at the Icahn School of Medicine at Mount Sinai</strong>,
+              under Principal Investigator Ashutosh K. Tewari, MD. It is built from real, de-identified Mount Sinai patient
+              data collected under IRB-approved research protocol <strong>STUDY-14-00050</strong>, and its recommendations
+              are aligned with national screening guidelines (AUA/SUO, NCCN). ePSA is an educational aid, not a diagnosis.
+            </p>
+          </div>
         </div>
 
         {/* ── Services ── */}
@@ -385,6 +397,15 @@ function WelcomeScreen({ onStart, onStaffAccess, onPrintForm, onPrintQr }) {
         >
           {holding ? 'Hold…' : 'Staff access'}
         </button>
+
+        <div className="qef-institution-footer">
+          <img src="/sinai_dark.png" alt="" aria-hidden="true" className="qef-institution-logo" onError={(e) => { e.target.style.display = 'none'; }} />
+          <p className="qef-institution-text">
+            Developed by the <strong>Department of Urology</strong>, Icahn School of Medicine at Mount Sinai
+            <br />
+            IRB Protocol STUDY-14-00050 · Aligned with AUA/SUO &amp; NCCN screening guidelines
+          </p>
+        </div>
       </div>
     </div>
   );

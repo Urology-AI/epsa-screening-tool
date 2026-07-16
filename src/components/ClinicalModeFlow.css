@@ -226,9 +226,11 @@
 .qef-learn-card--who  { border-left: 3px solid #06abeb; }
 .qef-learn-card--epsa { border-left: 3px solid #212070; }
 
+.qef-learn-card--trust { border-left: 3px solid #06abeb; }
 .theme-dark .qef-learn-card--psa  { border-left-color: #f472b6; }
 .theme-dark .qef-learn-card--who  { border-left-color: #38bdf8; }
 .theme-dark .qef-learn-card--epsa { border-left-color: #818cf8; }
+.theme-dark .qef-learn-card--trust { border-left-color: #38bdf8; }
 
 .qef-learn-card-head {
   display: flex;
@@ -396,6 +398,35 @@
   background: var(--surface-alt, #f3f4f6);
   border-color: var(--brand-400, #6366f1);
 }
+
+/* ── Institutional attribution footer (welcome screen) ── */
+.qef-institution-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 1rem 0.5rem 0.25rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--line-200);
+}
+.qef-institution-logo {
+  height: 1.375rem;
+  width: auto;
+  opacity: 0.85;
+}
+.qef-institution-text {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--ink-500, #6b7280);
+  max-width: 32rem;
+}
+.qef-institution-text strong {
+  color: var(--ink-700, #374151);
+  font-weight: 700;
+}
+.theme-dark .qef-institution-text strong { color: var(--ink-800); }
 
 /* ── Progress bar (sticky) ── */
 .qef-progress-bar {

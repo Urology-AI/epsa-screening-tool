@@ -400,6 +400,13 @@
   margin: 0;
 }
 
+.qer-institution-line {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line-200);
+  color: var(--ink-500, #6b7280);
+}
+
 /* ── QR handoff ── */
 .qer-qr {
   margin: 0.75rem 0 0;
