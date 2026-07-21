@@ -16,7 +16,8 @@ import ClinicalModeResult from './ClinicalModeResult.jsx';
 import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, ArrowLeftIcon, ShieldCheckIcon, FileTextIcon, PrinterIcon } from 'lucide-react';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
-import { getOrCreateUid, saveClinicalSession, generateSessionRef } from '../services/clinicalSessionService';
+import { getOrCreateUid, saveClinicalSession, generateSessionRef, setSessionPhoneHash } from '../services/clinicalSessionService';
+import PhoneHashCapture from './PhoneHashCapture.jsx';
 import { isTursoConfigured, pushSessions, markRedcapPushed } from '../services/tursoService';
 
 /* ─── BMI helpers ─── */
@@ -625,9 +626,15 @@ export default function ClinicalModeFlow() {
     const ref = generateSessionRef();
     setSessionRef(ref);
     setResult({ engineResult, formData, postResult });
-    // Ask consent after results — patient has context for what they're agreeing to.
-    setScreen(consented !== null ? 'result' : 'storage_consent');
-    if (consented !== null) persistSession(consented, { formData, engineResult, postResult }, ref);
+    // Mobile bus sessions: capture phone hash before results so PSA can be
+    // linked back when lab results arrive 3–5 days later.
+    if (unitCode) {
+      setScreen('phone_hash_capture');
+    } else {
+      // Ask consent after results — patient has context for what they're agreeing to.
+      setScreen(consented !== null ? 'result' : 'storage_consent');
+      if (consented !== null) persistSession(consented, { formData, engineResult, postResult }, ref);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -744,6 +751,30 @@ export default function ClinicalModeFlow() {
           onPrintQr={() => setShowQrPoster(true)}
         />
       </>
+    );
+  }
+
+  if (screen === 'phone_hash_capture') {
+    return (
+      <div className="qef-root">
+        <PhoneHashCapture
+          onCapture={async (hash) => {
+            // Store hash on the session so staff can look it up when PSA arrives
+            const sessions = await import('../services/clinicalSessionService')
+              .then(m => m.getClinicalSessions());
+            const session = sessions.find(s => s.sessionRef === sessionRef);
+            if (session?.id) setSessionPhoneHash(session.id, hash);
+            setScreen(consented !== null ? 'result' : 'storage_consent');
+            if (consented !== null) persistSession(consented, result, sessionRef);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onSkip={() => {
+            setScreen(consented !== null ? 'result' : 'storage_consent');
+            if (consented !== null) persistSession(consented, result, sessionRef);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      </div>
     );
   }
 
