@@ -399,6 +399,34 @@
   border-color: var(--brand-400, #6366f1);
 }
 
+/* ── Staff link on welcome screen ── */
+.qef-staff-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem auto 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-500);
+  background: var(--surface-alt, #f3f4f6);
+  border: 1px solid var(--line-200);
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0.4rem 0.9rem;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.qef-staff-link:hover {
+  color: var(--ink-700, #374151);
+  background: var(--surface, #fff);
+  border-color: var(--brand-400, #6366f1);
+}
+.qef-staff-link--holding {
+  color: #fff;
+  background: var(--brand-600, #0369a1);
+  border-color: var(--brand-600, #0369a1);
+}
+
 /* ── Institutional attribution footer (welcome screen) ── */
 .qef-institution-footer {
   display: flex;

@@ -147,3 +147,53 @@ export async function updateSessionStep2(_uid, session, step2Data) {
   setLocal(sessions);
   return sessions.find(s => s.id === session.id) ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// Phone hash linkage — mobile bus PSA follow-up
+//
+// WHY: Mobile bus patients complete the survey on-site but PSA results return
+// 3–5 days later. A SHA-256 hash of the phone number is stored temporarily to
+// allow staff to match the PSA result to the correct session when it arrives.
+// The hash is deleted once PSA is entered — no phone number is ever stored.
+// ---------------------------------------------------------------------------
+
+/**
+ * Store a phone hash on a session to enable future PSA linkage.
+ * Called at the end of mobile bus survey completion.
+ *
+ * @param {string} sessionId - session.id
+ * @param {string} phoneHash - SHA-256 hash from phoneHash.js
+ */
+export function setSessionPhoneHash(sessionId, phoneHash) {
+  const sessions = getLocal().map(s =>
+    s.id === sessionId ? { ...s, _phoneHash: phoneHash } : s
+  );
+  setLocal(sessions);
+}
+
+/**
+ * Find a session by phone hash.
+ * Called when staff enter a phone number to look up a pending PSA result.
+ *
+ * @param {string} phoneHash - SHA-256 hash of the phone number entered by staff
+ * @returns {object|null} - matching session or null
+ */
+export function findSessionByPhoneHash(phoneHash) {
+  return getLocal().find(s => s._phoneHash === phoneHash) ?? null;
+}
+
+/**
+ * Remove the phone hash from a session after PSA has been entered.
+ * Called automatically after successful PSA linkage.
+ * Once removed, the record is fully de-identified.
+ *
+ * @param {string} sessionId - session.id
+ */
+export function clearSessionPhoneHash(sessionId) {
+  const sessions = getLocal().map(s => {
+    if (s.id !== sessionId) return s;
+    const { _phoneHash: _removed, ...rest } = s;
+    return rest;
+  });
+  setLocal(sessions);
+}
