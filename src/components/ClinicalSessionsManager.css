@@ -497,22 +497,6 @@
 }
 .csm-pin-cancel:hover { color: var(--ink-900); }
 
-/* ── Staff link on welcome screen ── */
-.qef-staff-link {
-  display: block;
-  text-align: center;
-  font-size: 0.7rem;
-  color: var(--ink-500);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  text-decoration: none;
-  opacity: 0.6;
-  margin-top: 0.5rem;
-}
-.qef-staff-link:hover { opacity: 1; text-decoration: underline; }
-
 /* ── Print styles ── */
 @media print {
   .csm-root,
@@ -599,7 +583,6 @@
   margin-bottom: 0.4rem;
 }
 .csm-date-count { font-weight: 400; color: var(--ink-400, #9ca3af); }
-.qef-staff-link--holding { opacity: 1; color: var(--brand-600, #0369a1); }
 
 /* Stats strip */
 .csm-stats-strip {
