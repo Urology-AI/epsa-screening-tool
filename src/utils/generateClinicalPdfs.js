@@ -234,6 +234,16 @@ export async function generateClinicalFormPdf() {
   doc.setFontSize(9);
   doc.text('Quick-Entry Prostate Cancer Risk Assessment · Icahn School of Medicine at Mount Sinai', W / 2, 52, { align: 'center' });
 
+  // QR code (small, top-right corner of navy header band, clear of all body content) — for patients to scan
+  const QR_SM = 44;
+  const QR_X = W - MR - QR_SM;
+  const QR_Y = 10;
+  doc.addImage(qrData, 'PNG', QR_X, QR_Y, QR_SM, QR_SM);
+  setColor(doc, WHITE, 'text');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.text('Scan to use on your phone', QR_X + QR_SM / 2, QR_Y + QR_SM + 7, { align: 'center' });
+
   // ── Patient info bar ──────────────────────────────────────────────────────
   const PIY = 78;
   setColor(doc, [245, 245, 247], 'fill');
@@ -254,13 +264,6 @@ export async function generateClinicalFormPdf() {
   doc.text('Clinician:', ML + 370, PIY + 11);
   inputLine(doc, ML + 408, PIY + 13, 90);
 
-  // QR code (small, top-right corner of header region) — for patients to scan
-  const QR_SM = 50;
-  doc.addImage(qrData, 'PNG', W - MR - QR_SM, PIY + 33, QR_SM, QR_SM);
-  setColor(doc, GRAY, 'text');
-  doc.setFontSize(6);
-  doc.text('Scan to use\non your phone', W - MR - QR_SM - 2, PIY + 46, { align: 'right' });
-
   // ── Layout helpers ────────────────────────────────────────────────────────
   const OPT_INDENT = 8;
   const OPT_H = 11;     // height per option line
@@ -277,7 +280,7 @@ export async function generateClinicalFormPdf() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.text(text.toUpperCase(), x + 4, y + 10.5);
-    return y + SEC_H + 4;
+    return y + SEC_H + 9;
   }
 
   // Question with options (vertical list of radio buttons)
