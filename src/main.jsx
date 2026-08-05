@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './App.css';
-import ErrorBoundary from './components/ErrorBoundary.jsx';
+import { ErrorBoundary } from '@urology-ai/epsa-ui';
 import './i18n/i18n.js';
 
 const isAdmin = window.location.pathname.startsWith('/admin');
