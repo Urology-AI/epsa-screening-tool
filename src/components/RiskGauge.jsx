@@ -1,23 +1,30 @@
 import React, { useState, useEffect } from 'react';
 
 /* ─── Shared PSA Testing Priority Gauge ───
- * Used by Part 1 and Part 2 results to show PSA testing priority.
+ * Used to show PSA testing priority.
+ * Canonical source: e-psa/frontend/src/components/RiskGauge.jsx — mirror
+ * any change there (Phase 2 shared-component audit).
+ *
  * Props:
  *   score      — 0-100 numeric; controls needle position
  *   tierKey    — 'low' | 'intermediate' | 'elevated' (active arc)
  *   tierLabel  — caption shown below the gauge
  *   tiers      — optional [{ key, label, color }] overrides
+ *   showCaption — when true (the default), also renders the big
+ *     plain-language result badge above the tier legend.
+ *
+ * Tier colors intentionally match the --risk-lower/--risk-moderate/
+ * --risk-higher tokens in App.css (and the guideline banners elsewhere on
+ * the results screens), so the whole page tells one consistent
+ * green → amber → red story at a glance.
  */
-// Colors intentionally mirror the guideline banners below the gauge
-// (qer-guideline-banner--low/--moderate/--high) so the whole results
-// screen tells one consistent green → amber → red story at a glance.
 const DEFAULT_TIERS = [
-  { key: 'low',          label: 'Lower Priority',      color: '#1b7a4a' },
-  { key: 'intermediate', label: 'Worth Discussing',    color: '#b45309' },
-  { key: 'elevated',     label: 'Talk to Your Doctor', color: '#c0392b' },
+  { key: 'low',          label: 'Lower Priority',      color: '#1B7A4A' },
+  { key: 'intermediate', label: 'Consider Discussion', color: '#C97B00' },
+  { key: 'elevated',     label: 'Strong Candidate',    color: '#C0392B' },
 ];
 
-const RiskGauge = ({ score, tierKey, tierLabel, tiers = DEFAULT_TIERS }) => {
+const RiskGauge = ({ score, tierKey, tierLabel, tiers = DEFAULT_TIERS, showCaption = true }) => {
   const [animScore, setAnimScore] = useState(0);
   const [ripple, setRipple]       = useState(false);
   const [labelsIn, setLabelsIn]   = useState(false);
@@ -47,8 +54,8 @@ const RiskGauge = ({ score, tierKey, tierLabel, tiers = DEFAULT_TIERS }) => {
   const clampedAnim = Math.min(100, Math.max(0, Number(animScore) || 0));
   const svgRotate = (clampedAnim / 100) * 180 - 90;
 
-  // Theme-neutral translucent track: light enough not to muddy the
-  // color bands, but visible on both light and dark surfaces.
+  // Theme-neutral translucent track: light enough not to muddy the color
+  // bands, but visible on both light and dark surfaces.
   const trackColor = 'rgba(148, 163, 184, 0.30)';
   const [low, mid, high] = tiers;
   const activeColor =
@@ -112,10 +119,13 @@ const RiskGauge = ({ score, tierKey, tierLabel, tiers = DEFAULT_TIERS }) => {
         <circle cx={cx} cy={cy} r="3.5" fill={activeColor} style={{ transition: 'fill 0.4s ease' }} />
       </svg>
 
-      {/* Big, plain-language result badge — the one thing a patient needs to read at a glance */}
-      <figcaption className="risk-gauge-badge" style={{ background: `${activeColor}17`, color: activeColor, borderColor: `${activeColor}45` }}>
-        {caption}
-      </figcaption>
+      {/* Big, plain-language result badge — the one thing a patient needs to
+          read at a glance. Opt-in via showCaption (see prop docs above). */}
+      {showCaption && (
+        <figcaption className="risk-gauge-badge" style={{ background: `${activeColor}17`, color: activeColor, borderColor: `${activeColor}45` }}>
+          {caption}
+        </figcaption>
+      )}
 
       {/* Tier legend — staggered fade-in; active tier gets a filled pill */}
       <div className="risk-gauge-labels">
