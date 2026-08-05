@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import RiskGauge from './RiskGauge.jsx';
+import { RiskGauge } from '@urology-ai/epsa-ui';
 import { ArrowRightIcon, RotateCcwIcon, EditIcon, TrendingUpIcon, ChevronDownIcon, ChevronUpIcon, PrinterIcon, CloudIcon, DownloadIcon } from 'lucide-react';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import ClinicalModeResultPrint from './ClinicalModeResultPrint.jsx';
