@@ -10,17 +10,26 @@ import { LockIcon, LogOutIcon } from 'lucide-react';
 import './App.css';
 
 /**
- * Single authenticated shell for the whole screening tool.
+ * Single app shell, with one MSAL instance and two access tiers.
  *
- * Previously main.jsx branched on the pathname and rendered two independent
- * apps: an MSAL-protected AdminApp at /admin, and an entirely unauthenticated
- * ClinicalModeFlow at the root. The kiosk flow wrote clinical sessions to the
- * database with no signed-in user, using a Turso credential baked into the
- * bundle.
+ * ROOT (/) is PUBLIC. epsa.mssm.edu serves a patient-facing screening
+ * questionnaire; requiring a Mount Sinai login there would put a staff sign-in
+ * wall in front of members of the public, which is not what that domain is
+ * for. An earlier revision of this file did exactly that and took the public
+ * tool offline.
  *
- * Now there is one app and one MSAL instance. Nothing renders — and no route
- * on the Turso proxy can be reached — until Mount Sinai sign-in completes.
- * Routing to the kiosk flow or the sessions manager happens after that.
+ * /admin REQUIRES SIGN-IN. Everything that reads, exports or deletes stored
+ * clinical sessions lives behind it.
+ *
+ * What makes the public root safe is not a login — it is that the browser no
+ * longer holds any database credential. A consented public submission goes to
+ * a single insert-only endpoint on the Turso proxy that cannot read, list,
+ * update or delete anything. Compare the previous design, where the bundle
+ * carried a token granting full read/write/delete over every clinical session.
+ *
+ * REDCap is not reachable from the public flow at all. Staff review sessions
+ * in /admin and push them to the study database from there, with a verified
+ * identity on the request.
  */
 
 // One instance, one redirectUri. AdminApp used to override this to /admin,
@@ -92,13 +101,13 @@ function ShellContent() {
 
   // The kiosk flow is heavy; load it only once past the auth gate.
   useEffect(() => {
-    if (!isAuthenticated || isAdminPath()) return;
+    if (isAdminPath()) return;
     let cancelled = false;
     import('./components/ClinicalModeFlow.jsx').then((m) => {
       if (!cancelled) setKioskFlow(() => m.default);
     });
     return () => { cancelled = true; };
-  }, [isAuthenticated]);
+  }, []);
 
   function handleLogin() {
     setLoginError('');
@@ -116,6 +125,11 @@ function ShellContent() {
 
   const isLoading = inProgress === InteractionStatus.Redirect || inProgress === InteractionStatus.Login;
 
+  // Only /admin is gated. The root renders for everyone.
+  if (!isAuthenticated && !isAdminPath()) {
+    return KioskFlow ? <KioskFlow /> : null;
+  }
+
   if (!isAuthenticated) {
     return (
       <div style={{
@@ -130,10 +144,10 @@ function ShellContent() {
         color: 'var(--ink-900)',
       }}>
         <LockIcon size={40} style={{ opacity: 0.6 }} />
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>ePSA Screening</h1>
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Staff Admin</h1>
         <p style={{ margin: 0, color: 'var(--ink-600)', fontSize: '0.9rem', textAlign: 'center', maxWidth: '340px' }}>
-          Sign in with your Mount Sinai account to continue. Screening sessions
-          can only be recorded by signed-in staff.
+          Sign in with your Mount Sinai account to view and manage stored
+          screening sessions.
         </p>
         {loginError && (
           <p style={{ margin: 0, color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', maxWidth: '320px' }}>
@@ -224,6 +238,8 @@ function ShellContent() {
 
   if (!KioskFlow) return null;
 
+  // Signed-in staff running the kiosk see who they are (and their submissions
+  // are attributed); the public sees the questionnaire and nothing else.
   return (
     <div style={{ position: 'relative' }}>
       {signedInBadge}

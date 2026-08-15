@@ -1,5 +1,5 @@
 import { normaliseSession } from './clinicalSessionService';
-import { getAuthToken } from './authToken';
+import { getAuthToken, hasAuthToken } from './authToken';
 
 /**
  * Clinical session sync, via the Entra-authenticated epsa-turso-proxy Worker.
@@ -38,6 +38,36 @@ const COLS = [
 ];
 
 const PROXY_URL = (import.meta.env.VITE_TURSO_PROXY_URL || '').replace(/\/$/, '');
+
+/**
+ * Upload one consented session from the PUBLIC screening tool.
+ *
+ * Sends no credential, because there is no signed-in user at epsa.mssm.edu —
+ * it is a patient-facing questionnaire. The proxy's /public/session route is
+ * insert-only: it cannot read, list, update or delete, it returns no row data,
+ * and a duplicate id fails rather than overwriting an existing session.
+ *
+ * Prefer pushSessions() whenever someone IS signed in; that path is
+ * authenticated and marks the row as staff-entered.
+ */
+export async function uploadPublicSession(session, cloudId, turnstileToken) {
+  if (!PROXY_URL) return { ok: false, reason: 'not_configured' };
+
+  const row = sessionColumns(session, cloudId);
+
+  const res = await fetch(`${PROXY_URL}/public/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ row, turnstileToken }),
+  });
+
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json())?.error || ''; } catch { /* non-JSON */ }
+    return { ok: false, reason: detail || `http_${res.status}` };
+  }
+  return { ok: true };
+}
 
 export function isTursoConfigured() {
   return !!PROXY_URL;

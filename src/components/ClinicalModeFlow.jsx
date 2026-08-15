@@ -18,7 +18,9 @@ import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
 import { getOrCreateUid, saveClinicalSession, generateSessionRef, setSessionPhoneHash } from '../services/clinicalSessionService';
 import PhoneHashCapture from './PhoneHashCapture.jsx';
-import { isTursoConfigured, pushSessions, markRedcapPushed } from '../services/tursoService';
+import { isTursoConfigured, pushSessions, uploadPublicSession, markRedcapPushed, syncKey } from '../services/tursoService';
+import { hasAuthToken } from '../services/authToken';
+import { getTurnstileToken } from '../services/turnstile';
 
 /* ─── BMI helpers ─── */
 function calcBmi(ft, inch, lbs) {
@@ -651,25 +653,48 @@ export default function ClinicalModeFlow() {
     if (isTursoConfigured()) {
       setCloudStatus('saving');
       localSave
-        .then((id) => pushSessions([{
-          id: id ?? ref,
-          sessionRef: ref,
-          createdAt: new Date().toISOString(),
-          formData,
-          engineResult,
-          postResult,
-          rawAnswers: answers,
-          consented: true,
-          unitCode: unitCode || undefined,
-        }]))
+        .then((id) => {
+          const record = {
+            id: id ?? ref,
+            sessionRef: ref,
+            createdAt: new Date().toISOString(),
+            formData,
+            engineResult,
+            postResult,
+            rawAnswers: answers,
+            consented: true,
+            unitCode: unitCode || undefined,
+          };
+
+          // Signed-in staff use the authenticated path, which marks the row as
+          // staff-entered and can update it later. The public tool has no
+          // signed-in user, so it uses the insert-only upload instead.
+          if (hasAuthToken()) return pushSessions([record]);
+
+          // Public upload: mint a Turnstile token at submit time. Tokens are
+          // single-use and short-lived, so one taken at page load would often
+          // be stale by the time a patient finishes answering.
+          return getTurnstileToken()
+            .catch(() => null) // fall through; the Worker decides whether to accept
+            .then((turnstileToken) => uploadPublicSession(record, ref, turnstileToken))
+            .then((res) => {
+              if (!res.ok) throw new Error(res.reason || 'upload_failed');
+            });
+        })
         .then(() => setCloudStatus('saved'))
         .catch(() => setCloudStatus('error'));
     }
-    submitToRedcap(formData, ref).then((res) => {
-      if (res.success && isTursoConfigured()) {
-        markRedcapPushed({ id: ref, sessionRef: ref }).catch(() => {});
-      }
-    }).catch(() => {});
+
+    // REDCap is never reached from the public flow: writing to the study
+    // database requires a verified identity. Staff review uploaded sessions in
+    // /admin and push them from there, where the request carries their token.
+    if (hasAuthToken()) {
+      submitToRedcap(formData, ref).then((res) => {
+        if (res.success && isTursoConfigured()) {
+          markRedcapPushed({ id: ref, sessionRef: ref }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
   }
 
   function handleStorageConsent(didConsent) {
