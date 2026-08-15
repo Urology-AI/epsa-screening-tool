@@ -10,13 +10,17 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 # Public identifiers, not secrets — these are the same values the browser
 # already uses for MSAL login.
-AZURE_CLIENT_ID = ""
-AZURE_TENANT_ID = ""
+AZURE_CLIENT_ID = "38873359-3e5d-46a4-9b0c-6c8b682b2d6e"
+AZURE_TENANT_ID = "77e89d61-570f-43b0-b9e4-634f462e34b8"
 
-# Comma-separated exact origins permitted to call this Worker. Leave empty
-# only for local development; set it in production so a hostile page cannot
-# drive the API with a victim's token.
-ALLOWED_ORIGINS = ""
+# Comma-separated EXACT origins permitted to call this Worker (no wildcards,
+# no trailing slash). Only the screening tool calls this Worker.
+#
+# Leaving this empty disables the check entirely, so it is set here rather than
+# left for deploy time. Note that Vercel preview deployments get their own
+# hostnames and will be refused by this check — add one explicitly if you need
+# to exercise cloud sync from a preview.
+ALLOWED_ORIGINS = "https://epsa-screening-tool.vercel.app"
 
 # No KV binding: this Worker has no public route, so there is nothing to rate
 # limit for anonymous callers. Every request is already gated by a verified

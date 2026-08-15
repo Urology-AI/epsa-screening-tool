@@ -140,11 +140,20 @@ async function verifyMsalToken(authHeader, env) {
     const payload = JSON.parse(b64url(parts[1]));
 
     const tenantId = env.AZURE_TENANT_ID;
-    const clientId = env.AZURE_CLIENT_ID;
-    if (!tenantId || !clientId) return null;
+
+    // Comma-separated ALLOWLIST of accepted audiences rather than a single
+    // value, matching worker/redcap-proxy.js in the dashboard repo. Only the
+    // screening tool calls this Worker today, but keeping the two token
+    // verifiers identical means a second caller (or a re-registered app)
+    // cannot fail here in a way it would not fail there.
+    //
+    // Still strict: exact GUID matches only, no wildcards or prefixes.
+    const allowedAudiences = (env.AZURE_CLIENT_ID || '')
+      .split(',').map((x) => x.trim()).filter(Boolean);
+    if (!tenantId || allowedAudiences.length === 0) return null;
 
     if (payload.exp < Math.floor(Date.now() / 1000)) return null;
-    if (payload.aud !== clientId) return null;
+    if (!allowedAudiences.includes(payload.aud)) return null;
 
     const validIssuers = [
       `https://login.microsoftonline.com/${tenantId}/v2.0`,
