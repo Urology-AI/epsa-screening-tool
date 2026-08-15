@@ -27,6 +27,10 @@ AZURE_TENANT_ID = "77e89d61-570f-43b0-b9e4-634f462e34b8"
 # to exercise cloud sync from a preview.
 ALLOWED_ORIGINS = "https://epsa.mssm.edu,https://epsa-screening-tool.vercel.app"
 
-# No KV binding: this Worker has no public route, so there is nothing to rate
-# limit for anonymous callers. Every request is already gated by a verified
-# Mount Sinai Entra token.
+# Rate limiting for the public upload route. This binding is REQUIRED: without
+# it the limiter has nothing to count in, and /public/session refuses requests
+# rather than accepting unlimited anonymous writes. It previously no-opped
+# silently when unbound, which meant the documented limit did not exist.
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "9a7bf52dcfdc4c55b96bb0bcbbb37af5"
