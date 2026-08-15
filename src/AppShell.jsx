@@ -4,7 +4,7 @@ import { PublicClientApplication, InteractionRequiredAuthError, InteractionStatu
 import ClinicalSessionsManager from './components/ClinicalSessionsManager.jsx';
 import './components/ClinicalSessionsManager.css';
 import { getOrCreateUid } from './services/clinicalSessionService';
-import { setAuthTokenProvider } from './services/tursoService';
+import { setAuthTokenProvider } from './services/authToken';
 import { msalConfig, loginRequest } from './config/msal.js';
 import { LockIcon, LogOutIcon } from 'lucide-react';
 import './App.css';
@@ -59,7 +59,8 @@ function ShellContent() {
   }, [instance]);
 
   /**
-   * Hand tursoService a way to get a current token.
+   * Install the token provider used by every authenticated service call
+   * (Turso proxy and REDCap proxy alike).
    *
    * This supplies the ID TOKEN, not the Graph access token from the User.Read
    * scope: the Worker checks `aud === AZURE_CLIENT_ID`, and a Graph access

@@ -117,6 +117,8 @@ function buildClinicalRecord(formData, sessionRef, checklistData) {
   return clean;
 }
 
+import { getAuthToken } from '../services/authToken';
+
 /**
  * Submit a screening record to REDCap via the proxy worker.
  * Returns { success: true } or { success: false, error: string }.
@@ -130,11 +132,22 @@ export async function submitToRedcap(formData, sessionRef, checklistData) {
   const record = buildClinicalRecord(formData, sessionRef, checklistData);
 
   try {
+    // The proxy requires a verified Mount Sinai Entra token on every route.
+    // It previously accepted any POST that carried a plausible Origin header,
+    // which meant anyone could write records into the study database.
+    const token = await getAuthToken();
+
     const res = await fetch(proxyUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ record }),
     });
+    if (res.status === 401) {
+      throw new Error('Your Mount Sinai sign-in is no longer valid. Please sign in again.');
+    }
     if (!res.ok) {
       throw new Error(`Proxy returned HTTP ${res.status}`);
     }

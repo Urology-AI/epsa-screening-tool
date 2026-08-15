@@ -1,4 +1,5 @@
 import { normaliseSession } from './clinicalSessionService';
+import { getAuthToken } from './authToken';
 
 /**
  * Clinical session sync, via the Entra-authenticated epsa-turso-proxy Worker.
@@ -38,30 +39,8 @@ const COLS = [
 
 const PROXY_URL = (import.meta.env.VITE_TURSO_PROXY_URL || '').replace(/\/$/, '');
 
-/**
- * Supplies the current Entra access token. The app shell installs this once at
- * startup (see main.jsx); without it every call below fails closed rather than
- * falling back to some weaker credential.
- */
-let authTokenProvider = null;
-
-export function setAuthTokenProvider(fn) {
-  authTokenProvider = fn;
-}
-
 export function isTursoConfigured() {
   return !!PROXY_URL;
-}
-
-async function getAuthToken() {
-  if (!authTokenProvider) {
-    throw new Error('Not signed in. Clinical session sync requires Mount Sinai sign-in.');
-  }
-  const token = await authTokenProvider();
-  if (!token) {
-    throw new Error('Your session has expired. Please sign in again.');
-  }
-  return token;
 }
 
 /**
