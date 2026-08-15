@@ -219,13 +219,6 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
-    let client;
-    try {
-      client = getClient(env);
-    } catch {
-      return json({ error: 'Turso not configured' }, 503, cors);
-    }
-
     // ── EVERY route below this line requires Mount Sinai Entra SSO ────────
     //
     // There is deliberately no public route. An earlier design exposed
@@ -240,6 +233,17 @@ export default {
     // member. The patient app rejects EP- refs up front and says so.
     const user = await verifyMsalToken(request.headers.get('Authorization'), env);
     if (!user) return json({ error: 'Unauthorized' }, 401, cors);
+
+    // Backend configuration is checked only AFTER authentication. Doing it
+    // first meant an anonymous caller got 503 instead of 401 — which leaks
+    // whether the Worker is wired up, and makes "protected" and
+    // "misconfigured" indistinguishable to the production probe.
+    let client;
+    try {
+      client = getClient(env);
+    } catch {
+      return json({ error: 'Turso not configured' }, 503, cors);
+    }
 
     await ensureSchema(client);
 
