@@ -32,11 +32,37 @@ import './App.css';
  * identity on the request.
  */
 
-// One instance, one redirectUri. AdminApp used to override this to /admin,
-// which meant two MSAL instances with two registered redirect URIs for what is
-// really a single SPA. The intended path is preserved across the redirect via
-// sessionStorage instead.
-const msalInstance = new PublicClientApplication(msalConfig);
+/**
+ * Sign-in happens only at /admin, so that is the redirect URI we send.
+ *
+ * msalConfig defaults to `origin + BASE_URL` — the site root. That is correct
+ * for an app where the root itself is authenticated, and wrong here: the root
+ * is the public screening tool. Sending it produced
+ *
+ *   AADSTS50011: The redirect URI 'https://epsa.mssm.edu/' ... does not match
+ *
+ * because the Azure app registration lists only the /admin paths:
+ *   https://epsa.mssm.edu/admin
+ *   https://epsa-screening-tool.vercel.app/admin
+ *   https://epsa-admin-dashboard.pages.dev
+ *   https://localhost:5173
+ *
+ * Overriding here means no Azure change is needed, and the value matches what
+ * is already registered for both production hostnames.
+ */
+const ADMIN_PATH = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/admin`;
+const ADMIN_URL = window.location.origin + ADMIN_PATH;
+
+const adminMsalConfig = {
+  ...msalConfig,
+  auth: {
+    ...msalConfig.auth,
+    redirectUri: ADMIN_URL,
+    postLogoutRedirectUri: ADMIN_URL,
+  },
+};
+
+const msalInstance = new PublicClientApplication(adminMsalConfig);
 const msalReady = msalInstance.initialize();
 
 const POST_LOGIN_PATH_KEY = 'epsa_post_login_path';
@@ -118,9 +144,7 @@ function ShellContent() {
   }
 
   function handleLogout() {
-    instance.logoutRedirect({
-      postLogoutRedirectUri: window.location.origin + import.meta.env.BASE_URL,
-    });
+    instance.logoutRedirect({ postLogoutRedirectUri: ADMIN_URL });
   }
 
   const isLoading = inProgress === InteractionStatus.Redirect || inProgress === InteractionStatus.Login;
