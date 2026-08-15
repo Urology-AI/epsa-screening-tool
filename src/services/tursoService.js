@@ -1,18 +1,26 @@
-import { createClient } from '@libsql/client/web';
 import { normaliseSession } from './clinicalSessionService';
+import { getAuthToken } from './authToken';
 
 /**
- * Turso cloud sync for clinical staff mode sessions.
+ * Clinical session sync, via the Entra-authenticated epsa-turso-proxy Worker.
  *
- * Mirrors the digital-twin push/pull pattern: each session is stored as a row
- * of flat scalar columns (queryable for research) plus a `full_record` JSON
- * blob that round-trips the complete session on pull.
+ * This module used to open a Turso connection directly from the browser using
+ * a VITE_-prefixed Turso auth token read from the build env. Vite inlines such vars
+ * into the bundle, so that database credential was readable by anyone who
+ * loaded the page — and it carried full read/write/delete over the entire
+ * clinical_sessions table. The token now lives only as a Worker secret and
+ * every call below carries the caller's Mount Sinai Entra token instead.
+ *
+ * What did NOT move to the server: de-identification. `deidentifySession()`
+ * still runs in the browser, so identifiers are stripped before the data
+ * leaves the device rather than being trusted to a remote hop.
  *
  * Local ids never leave the browser — each session gets a SHA-256 cloud id,
  * with the local↔cloud mapping kept in localStorage.
  */
 
 // Flat columns extracted from the session for direct SQL querying.
+// Must stay identical to COLS in worker/turso-proxy.js.
 const COLS = [
   'id', 'session_ref', 'created_at', 'type', 'status', 'final_category',
   // Part 1 inputs (formData)
@@ -29,52 +37,40 @@ const COLS = [
   'full_record',
 ];
 
-const CREATE_SQL = `CREATE TABLE IF NOT EXISTS clinical_sessions (
-  id TEXT PRIMARY KEY, session_ref TEXT, created_at TEXT, type TEXT, status TEXT,
-  final_category TEXT,
-  age INTEGER, race TEXT, family_history TEXT, genetic_risk TEXT, bmi REAL,
-  exercise TEXT, smoking TEXT, chemical_exposure TEXT, diet_pattern TEXT,
-  comorbidity_score INTEGER, ipss_qol INTEGER, shim_q1 INTEGER,
-  tier_key TEXT, tier_label TEXT, display_range TEXT,
-  psa REAL, pirads TEXT, on_hormonal_therapy INTEGER,
-  redcap_pushed_at TEXT,
-  clinician_influence TEXT,
-  clinician_action TEXT,
-  clinician_notes TEXT,
-  clinician_checklist_at TEXT,
-  full_record TEXT
-)`;
-
-// One migration statement per column added after initial release; each is
-// wrapped in allSettled so existing tables silently gain the column.
-const MIGRATE_COLS = [
-  ['redcap_pushed_at', 'TEXT'],
-  ['clinician_influence', 'TEXT'],
-  ['clinician_action', 'TEXT'],
-  ['clinician_notes', 'TEXT'],
-  ['clinician_checklist_at', 'TEXT'],
-];
+const PROXY_URL = (import.meta.env.VITE_TURSO_PROXY_URL || '').replace(/\/$/, '');
 
 export function isTursoConfigured() {
-  return !!(import.meta.env.VITE_TURSO_URL && import.meta.env.VITE_TURSO_AUTH_TOKEN);
+  return !!PROXY_URL;
 }
 
-function getClient() {
-  const url = import.meta.env.VITE_TURSO_URL;
-  const authToken = import.meta.env.VITE_TURSO_AUTH_TOKEN;
-  if (!url || !authToken) {
-    throw new Error('Turso not configured. Set VITE_TURSO_URL and VITE_TURSO_AUTH_TOKEN.');
+/**
+ * Call the proxy. Throws on any non-2xx so callers surface a real error
+ * instead of silently treating a rejected write as success.
+ */
+async function callProxy(path, { method = 'POST', body } = {}) {
+  if (!PROXY_URL) {
+    throw new Error('Cloud sync is not configured on this deployment (VITE_TURSO_PROXY_URL).');
   }
-  return createClient({ url: url.replace(/^libsql:\/\//, 'https://'), authToken });
-}
+  const token = await getAuthToken();
 
-async function ensureSchema(client) {
-  await client.execute(CREATE_SQL);
-  await Promise.allSettled(
-    MIGRATE_COLS.map(([col, type]) =>
-      client.execute(`ALTER TABLE clinical_sessions ADD COLUMN ${col} ${type}`)
-    )
-  );
+  const res = await fetch(`${PROXY_URL}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
+  if (res.status === 401) {
+    throw new Error('Your Mount Sinai sign-in is no longer valid. Please sign in again.');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json())?.error || ''; } catch { /* non-JSON body */ }
+    throw new Error(detail || `Cloud sync failed (HTTP ${res.status}).`);
+  }
+  return res.json();
 }
 
 async function sha256hex(s) {
@@ -156,14 +152,13 @@ export async function markPendingDelete(session) {
 }
 
 /** Delete all tombstoned rows from Turso; clears the ledger on success. */
-async function flushPendingDeletes(client) {
+async function flushPendingDeletes() {
   const pending = loadPendingDeletes();
   const ids = [...new Set(Object.values(pending).flat())];
   if (!ids.length) return 0;
-  await client.batch(
-    ids.map((id) => ({ sql: 'DELETE FROM clinical_sessions WHERE id = ?', args: [id] })),
-    'write'
-  );
+  await callProxy('/sessions/delete', { body: { ids } });
+  // Only cleared after the proxy confirms; a failed call throws above and the
+  // tombstones survive to be retried on the next push or pull.
   localStorage.removeItem(PENDING_DELETE_KEY);
   return Object.keys(pending).length;
 }
@@ -240,10 +235,7 @@ export function isPushable(session) {
 export async function pushSessions(sessions) {
   sessions = sessions.filter(isPushable);
   if (!sessions.length && !getPendingDeleteCount()) return { pushed: 0, deleted: 0 };
-  const client = getClient();
-  await ensureSchema(client);
-
-  const deleted = await flushPendingDeletes(client);
+  const deleted = await flushPendingDeletes();
   if (!sessions.length) return { pushed: 0, deleted };
 
   // The cloud row id is a hash of the stable syncKey (sessionRef when
@@ -255,20 +247,14 @@ export async function pushSessions(sessions) {
   }));
   saveIdMap(idMap);
 
-  const cols = COLS.join(', ');
-  const ph = COLS.map(() => '?').join(', ');
+  // Rows are built (and de-identified) here, then handed to the proxy. SQL is
+  // assembled server-side from a fixed column list, so the client cannot widen
+  // the write beyond these columns.
+  const rows = sessions.map((s) => sessionColumns(s, idMap[s.id]));
 
-  const stmts = sessions.map((s) => {
-    const row = sessionColumns(s, idMap[s.id]);
-    return {
-      sql: `INSERT OR REPLACE INTO clinical_sessions (${cols}) VALUES (${ph})`,
-      args: COLS.map((k) => (row[k] === undefined ? null : row[k])),
-    };
-  });
-
-  await client.batch(stmts, 'write');
+  const { pushed } = await callProxy('/sessions/push', { body: { rows } });
   markSynced(sessions);
-  return { pushed: stmts.length, deleted };
+  return { pushed: pushed ?? rows.length, deleted };
 }
 
 /**
@@ -277,15 +263,10 @@ export async function pushSessions(sessions) {
  * Returns session records ready to merge into local storage.
  */
 export async function pullSessions() {
-  const client = getClient();
-  await ensureSchema(client);
-
   // Apply pending deletions first so locally deleted cases don't resurrect.
-  await flushPendingDeletes(client);
+  await flushPendingDeletes();
 
-  const result = await client.execute(
-    'SELECT id, full_record FROM clinical_sessions ORDER BY created_at DESC'
-  );
+  const { rows } = await callProxy('/sessions', { method: 'GET' });
 
   const idMap = loadIdMap();
   const cloudToLocal = {};
@@ -295,9 +276,7 @@ export async function pullSessions() {
 
   let idMapDirty = false;
   const sessions = [];
-  for (const row of result.rows) {
-    const r = {};
-    result.columns.forEach((col, i) => { r[col] = row[i]; });
+  for (const r of rows) {
     const cloudId = r.id;
     if (!r.full_record) continue;
 
@@ -325,19 +304,16 @@ export async function pullSessions() {
  * Updates the Turso row in place; the caller should also update local storage.
  */
 export async function markRedcapPushed(session) {
-  const client = getClient();
-  await ensureSchema(client);
   const idMap = loadIdMap();
   if (!idMap[session.id]) idMap[session.id] = await sha256hex(syncKey(session));
   saveIdMap(idMap);
   const cloudId = idMap[session.id];
-  const now = new Date().toISOString();
-  await client.execute({
-    sql: 'UPDATE clinical_sessions SET redcap_pushed_at = ? WHERE id = ?',
-    args: [now, cloudId],
+  const { pushedAt } = await callProxy('/sessions/redcap-pushed', {
+    body: { id: cloudId },
   });
-  return now;
+  return pushedAt ?? new Date().toISOString();
 }
+
 
 /**
  * Persist the clinician checklist onto an existing session row, keyed by
@@ -347,73 +323,24 @@ export async function markRedcapPushed(session) {
 export async function saveChecklistToTurso(sessionRef, checklistData) {
   if (!isTursoConfigured()) return { ok: false, reason: 'turso_not_configured' };
   if (!sessionRef) return { ok: false, reason: 'missing_session_ref' };
-  const client = getClient();
-  await ensureSchema(client);
 
-  const checklistAt = new Date().toISOString();
-
-  const existing = await client.execute({
-    sql: 'SELECT full_record FROM clinical_sessions WHERE session_ref = ? LIMIT 1',
-    args: [sessionRef],
-  });
-  const row = existing.rows[0];
-  let fullRecord = null;
-  if (row) {
-    const raw = row[existing.columns.indexOf('full_record')];
-    if (raw) {
-      try { fullRecord = JSON.parse(raw); } catch { fullRecord = null; }
-    }
+  // The read-modify-write of full_record happens inside the proxy, in one
+  // place, rather than as a client round-trip that could interleave with
+  // another clinician editing the same session.
+  try {
+    await callProxy('/sessions/checklist', {
+      body: { sessionRef, checklistData },
+    });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, reason: err?.message || 'checklist_save_failed' };
   }
-  if (fullRecord) {
-    fullRecord = { ...fullRecord, checklistData };
-  }
-
-  await client.execute({
-    sql: `UPDATE clinical_sessions
-          SET clinician_influence = ?,
-              clinician_action = ?,
-              clinician_notes = ?,
-              clinician_checklist_at = ?
-              ${fullRecord ? ', full_record = ?' : ''}
-          WHERE session_ref = ?`,
-    args: fullRecord
-      ? [
-          checklistData.influence,
-          checklistData.action,
-          checklistData.notes || null,
-          checklistAt,
-          JSON.stringify(fullRecord),
-          sessionRef,
-        ]
-      : [
-          checklistData.influence,
-          checklistData.action,
-          checklistData.notes || null,
-          checklistAt,
-          sessionRef,
-        ],
-  });
-  return { ok: true };
 }
 
-/**
- * Fetch a single session by its human-readable ref (EP-YYYYMMDD-XXXX),
- * e.g. to continue a community-screening session in the full app.
- * Read-only: no local sync ledger or id-map side effects.
- * Returns the session record, or null if no row matches.
- */
-export async function pullSessionByRef(sessionRef) {
-  const client = getClient();
-  await ensureSchema(client);
-
-  const result = await client.execute({
-    sql: 'SELECT full_record FROM clinical_sessions WHERE session_ref = ? LIMIT 1',
-    args: [sessionRef],
-  });
-  const row = result.rows[0];
-  if (!row) return null;
-
-  const fullRecord = row[result.columns.indexOf('full_record')];
-  if (!fullRecord) return null;
-  try { return JSON.parse(fullRecord); } catch { return null; }
-}
+// pullSessionByRef() was removed along with the proxy's public by-ref route.
+//
+// It existed so the patient-facing ePSA app could resume a screening from the
+// EP-YYYYMMDD-XXXX code on a results card, which required reading clinical
+// session data without an authenticated user. Every route on the proxy now
+// requires a Mount Sinai Entra token, so a completed screening is reopened or
+// amended on the clinical side by signed-in staff.
