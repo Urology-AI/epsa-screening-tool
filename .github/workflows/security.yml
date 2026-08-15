@@ -1,0 +1,85 @@
+name: Security
+
+# Runs on every change, before anything ships.
+#   Layer 1 = .githooks/pre-push (blocks secrets at the developer's machine)
+#   Layer 2 = this workflow
+#
+# The credential that matters most here is the Turso database token. It is a
+# Worker secret now (worker/turso-proxy.js) and must never reappear in the
+# browser bundle.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret scan (full history)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A secret committed and later "removed" is still published and still
+          # valid, so the whole history has to be scanned, not just the diff.
+          fetch-depth: 0
+
+      # Invoking the binary directly rather than gitleaks/gitleaks-action@v2:
+      # that action requires a paid GITLEAKS_LICENSE for organization-owned
+      # repos, and this lives under the Urology-AI org.
+      - name: Install gitleaks
+        run: |
+          VERSION=8.30.1
+          curl -sSL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/
+          gitleaks version
+
+      - name: Run gitleaks
+        run: gitleaks git --config .gitleaks.toml --redact --exit-code 1 .
+
+  browser-exposure:
+    name: No credentials reachable from the browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Catches the class of bug that never appears in git history: a
+      # credential inlined into the bundle by a VITE_ prefix. This repo shipped
+      # exactly that with VITE_TURSO_AUTH_TOKEN before the proxy Worker existed.
+      - name: Check for VITE_-prefixed secrets
+        run: ./security/check-vite-env.sh src .env.example
+
+      - name: Assert server credentials are not read from src/
+        run: ./security/check-server-secrets.sh src
+
+      # The browser must not open a database connection at all — every clinical
+      # session read or write goes through the Entra-gated Worker.
+      - name: Assert no direct database client in browser code
+        run: |
+          if grep -rn "@libsql/client" src/ 2>/dev/null; then
+            echo "::error::src/ imports a Turso client directly; use the proxy Worker"
+            exit 1
+          fi
+          echo "OK: browser code holds no database client."
+
+  dependencies:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    # Advisories land independently of our changes; surface without blocking.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm audit --audit-level=high

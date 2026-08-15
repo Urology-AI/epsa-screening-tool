@@ -1,0 +1,23 @@
+name = "epsa-turso-proxy"
+main = "turso-proxy.js"
+compatibility_date = "2026-06-17"
+compatibility_flags = ["nodejs_compat"]
+
+# Secrets (set once, never in code):
+#   wrangler secret put TURSO_URL            --config worker/wrangler.turso.toml
+#   wrangler secret put TURSO_AUTH_TOKEN     --config worker/wrangler.turso.toml
+
+[vars]
+# Public identifiers, not secrets — these are the same values the browser
+# already uses for MSAL login.
+AZURE_CLIENT_ID = ""
+AZURE_TENANT_ID = ""
+
+# Comma-separated exact origins permitted to call this Worker. Leave empty
+# only for local development; set it in production so a hostile page cannot
+# drive the API with a victim's token.
+ALLOWED_ORIGINS = ""
+
+# No KV binding: this Worker has no public route, so there is nothing to rate
+# limit for anonymous callers. Every request is already gated by a verified
+# Mount Sinai Entra token.

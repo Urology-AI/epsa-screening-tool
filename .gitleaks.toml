@@ -1,0 +1,69 @@
+# gitleaks configuration for the ePSA Firebase app.
+#
+# Extends the upstream default ruleset rather than replacing it, so new rules
+# added upstream are picked up automatically.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "redcap-api-token"
+description = "REDCap API token (32 uppercase hex chars near a redcap keyword)"
+regex = '''(?i)redcap[^\n]{0,40}\b[0-9A-F]{32}\b'''
+keywords = ["redcap"]
+
+[[rules]]
+id = "turso-auth-token"
+description = "Turso database auth token (literal value)"
+# Turso tokens are three-part JWTs. Requiring that shape avoids matching code
+# that merely REFERENCES the variable, e.g.
+#   TURSO_AUTH_TOKEN = import.meta.env.VITE_TURSO_AUTH_TOKEN
+# which is a build-config problem, not a committed secret. That separate class
+# of bug is caught by security/check-vite-env.sh.
+regex = '''(?i)turso[_-]?auth[_-]?token['"\s:=]+eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}'''
+keywords = ["turso"]
+
+[allowlist]
+description = "Documented placeholders and public-by-design values"
+
+# Match the regexes below against the full matched line rather than just the
+# extracted secret. Several entries key off the identifier NAME (qKey,
+# CONSENT_CACHE_KEY), which is not part of the extracted secret — with the
+# default target of "secret" they silently never apply.
+regexTarget = "match"
+
+paths = [
+  # Templates whose whole purpose is to show the SHAPE of a credential.
+  # They must contain no real values — the placeholder regexes below are what
+  # keep that honest.
+  '''\.env\.example$''',
+  # Rules tests deliberately contain fake tokens and fake admin emails.
+  '''(^|/)security/.*\.test\.js$''',
+  '''(^|/)security/helpers\.js$''',
+  # Vendored and generated trees.
+  '''(^|/)node_modules/''',
+  '''package-lock\.json$''',
+]
+
+regexes = [
+  # Obvious placeholder text.
+  '''your_[a-z_]*token''',
+  '''YOUR_[A-Z_]*TOKEN''',
+  '''xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx''',
+  '''(?i)\bplaceholder\b''',
+  '''\.\.\.''',
+
+  # gitleaks' generic-api-key rule fires on identifier NAMES containing "key".
+  # These are the only such names in this codebase, and their values are i18n
+  # lookup paths and a localStorage key — not credentials. Deliberately narrow
+  # (lowercase dotted paths only) so a real secret assigned to one of these
+  # names would still be caught.
+  '''(?:labelKey|qKey)\s*:\s*['"][a-z0-9_.]+['"]''',
+  '''CONSENT_CACHE_KEY\s*=\s*['"]epsa_[a-z0-9_]+['"]''',
+
+  # A Firebase Web API key is NOT a secret. It identifies the project and
+  # authorizes nothing on its own — access is governed by firestore.rules and
+  # storage.rules, which security/ tests on every PR. It is required to be
+  # present in client code for the SDK to work.
+  '''AIza[0-9A-Za-z_-]{35}''',
+]
