@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import { supportedLanguages } from './supportedLanguages';
+import { supportedLanguages } from '@urology-ai/epsa-ui';
 
 import en from './locales/en/translation.json';
 import es from './locales/es/translation.json';
