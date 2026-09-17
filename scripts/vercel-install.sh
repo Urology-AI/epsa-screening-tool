@@ -1,8 +1,10 @@
 #!/bin/sh
-# Vercel rewrites github.com git deps to its own GitHub App SSH key, which
-# doesn't have access to the private epsa-engine repo. Route both the ssh
-# and https forms through an authenticated clone instead.
+# @epsa/engine resolves to the @urology-ai/epsa-engine GitHub Packages
+# registry package (npm: alias in package.json), which needs its own
+# registry auth — same EPSA_ENGINE_DEPLOY_KEY secret used previously for git
+# clone auth, now used as a registry read token instead.
 set -e
-git config --global "url.https://x-access-token:${EPSA_ENGINE_DEPLOY_KEY}@github.com/.insteadOf" "ssh://git@github.com/"
-git config --global "url.https://x-access-token:${EPSA_ENGINE_DEPLOY_KEY}@github.com/.insteadOf" "https://github.com/"
+echo "@urology-ai:registry=https://npm.pkg.github.com" > .npmrc
+echo "//npm.pkg.github.com/:_authToken=${EPSA_ENGINE_DEPLOY_KEY}" >> .npmrc
 npm install
+rm -f .npmrc
