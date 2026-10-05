@@ -1,5 +1,7 @@
 import { normaliseSession } from './clinicalSessionService';
 import { getAuthToken, hasAuthToken } from './authToken';
+import { DEFAULT_CALCULATOR_CONFIG } from '@epsa/engine';
+import { PREDICTION_COLS, predictionColumns, hashConfig } from './predictionColumns';
 
 /**
  * Clinical session sync, via the Entra-authenticated epsa-turso-proxy Worker.
@@ -31,6 +33,8 @@ const COLS = [
   'tier_key', 'tier_label', 'display_range',
   // Part 2 inputs (step2)
   'psa', 'pirads', 'on_hormonal_therapy',
+  // Prediction record for prospective validation (see predictionColumns.js)
+  ...PREDICTION_COLS,
   // REDCap export tracking
   'redcap_pushed_at',
   // Complete session blob
@@ -53,7 +57,7 @@ const PROXY_URL = (import.meta.env.VITE_TURSO_PROXY_URL || '').replace(/\/$/, ''
 export async function uploadPublicSession(session, cloudId, turnstileToken) {
   if (!PROXY_URL) return { ok: false, reason: 'not_configured' };
 
-  const row = sessionColumns(session, cloudId);
+  const row = await sessionColumns(session, cloudId);
 
   const res = await fetch(`${PROXY_URL}/public/session`, {
     method: 'POST',
@@ -217,8 +221,11 @@ function deidentifySession(session, cloudId) {
   };
 }
 
+let modelHashPromise;
+const modelHash = () => (modelHashPromise ??= hashConfig(DEFAULT_CALCULATOR_CONFIG));
+
 /** Extract flat column values from a (de-identified) session. */
-function sessionColumns(session, cloudId) {
+async function sessionColumns(session, cloudId) {
   const f = session.formData ?? {};
   const r = session.engineResult ?? {};
   const s2 = session.step2 ?? {};
@@ -247,6 +254,7 @@ function sessionColumns(session, cloudId) {
     psa: s2.psa != null ? Number(s2.psa) : null,
     pirads: s2.pirads != null ? String(s2.pirads) : null,
     on_hormonal_therapy: s2.onHormonalTherapy ? 1 : 0,
+    ...predictionColumns(session.engineResult, session.postResult, await modelHash()),
     redcap_pushed_at: session.redcapPushedAt ?? null,
     full_record: JSON.stringify(deidentifySession(session, cloudId)),
   };
@@ -280,7 +288,7 @@ export async function pushSessions(sessions) {
   // Rows are built (and de-identified) here, then handed to the proxy. SQL is
   // assembled server-side from a fixed column list, so the client cannot widen
   // the write beyond these columns.
-  const rows = sessions.map((s) => sessionColumns(s, idMap[s.id]));
+  const rows = await Promise.all(sessions.map((s) => sessionColumns(s, idMap[s.id])));
 
   const { pushed } = await callProxy('/sessions/push', { body: { rows } });
   markSynced(sessions);
