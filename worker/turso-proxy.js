@@ -70,6 +70,14 @@ const COLS = [
   'tier_key', 'tier_label', 'display_range',
   // Part 2 inputs (step2)
   'psa', 'pirads', 'on_hormonal_therapy',
+  // Prediction record for prospective validation. Must match PREDICTION_COLS
+  // in src/services/predictionColumns.js.
+  'engine_version', 'guideline_version', 'model_hash',
+  'model1_version', 'model2_version',
+  'part1_score', 'recommend_psa', 'psa_recommend_reason',
+  'part2_tier_key', 'part2_risk_cat',
+  'mri_recommended', 'mri_recommend_reason',
+  'biopsy_recommended', 'biopsy_reason',
   // REDCap export tracking
   'redcap_pushed_at',
   // Complete session blob
@@ -106,6 +114,22 @@ const MIGRATE_COLS = [
   ['clinician_action', 'TEXT'],
   ['clinician_notes', 'TEXT'],
   ['clinician_checklist_at', 'TEXT'],
+  // Prediction record for prospective validation (predictions only; outcomes
+  // are collected separately and are not part of this schema yet).
+  ['engine_version', 'TEXT'],
+  ['guideline_version', 'TEXT'],
+  ['model_hash', 'TEXT'],
+  ['model1_version', 'TEXT'],
+  ['model2_version', 'TEXT'],
+  ['part1_score', 'INTEGER'],
+  ['recommend_psa', 'INTEGER'],
+  ['psa_recommend_reason', 'TEXT'],
+  ['part2_tier_key', 'TEXT'],
+  ['part2_risk_cat', 'TEXT'],
+  ['mri_recommended', 'INTEGER'],
+  ['mri_recommend_reason', 'TEXT'],
+  ['biopsy_recommended', 'INTEGER'],
+  ['biopsy_reason', 'TEXT'],
 ];
 
 let schemaReady = false;
@@ -258,6 +282,21 @@ const PUBLIC_FIELD_RULES = {
   psa:             (v) => v === null || (typeof v === 'number' && v >= 0 && v <= 10000),
   pirads:          (v) => v === null || (typeof v === 'string' && v.length <= 16),
   on_hormonal_therapy: (v) => v === null || v === 0 || v === 1,
+
+  engine_version:       (v) => v === null || (typeof v === 'string' && v.length <= 32),
+  guideline_version:    (v) => v === null || (typeof v === 'string' && v.length <= 64),
+  model_hash:           (v) => v === null || (typeof v === 'string' && /^[0-9a-f]{16}$/.test(v)),
+  model1_version:       (v) => v === null || (typeof v === 'string' && v.length <= 32),
+  model2_version:       (v) => v === null || (typeof v === 'string' && v.length <= 32),
+  part1_score:          (v) => v === null || (Number.isInteger(v) && v >= 0 && v <= 1000),
+  recommend_psa:        (v) => v === null || v === 0 || v === 1,
+  psa_recommend_reason: (v) => v === null || (typeof v === 'string' && v.length <= 64),
+  part2_tier_key:       (v) => v === null || (typeof v === 'string' && v.length <= 64),
+  part2_risk_cat:       (v) => v === null || (typeof v === 'string' && v.length <= 64),
+  mri_recommended:      (v) => v === null || v === 0 || v === 1,
+  mri_recommend_reason: (v) => v === null || (typeof v === 'string' && v.length <= 64),
+  biopsy_recommended:   (v) => v === null || v === 0 || v === 1,
+  biopsy_reason:        (v) => v === null || (typeof v === 'string' && v.length <= 64),
 
   full_record:     (v) => {
     if (v === null) return true;
