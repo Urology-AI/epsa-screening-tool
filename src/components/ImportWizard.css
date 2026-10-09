@@ -20,3 +20,4 @@
 .iw-btn { display: inline-flex; align-items: center; gap: 0.4rem; align-self: flex-start; padding: 0.5rem 1rem; border-radius: 7px; font-size: 0.8125rem; font-weight: 600; border: 1px solid var(--line-200, #cbd5e1); background: var(--surface, #fff); color: inherit; cursor: pointer; }
 .iw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .iw-btn--primary { background: var(--ms-navy, #212070); color: #fff; border-color: transparent; }
+.iw-old { text-decoration: line-through; opacity: 0.6; }

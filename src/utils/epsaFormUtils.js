@@ -43,3 +43,69 @@ export function expandShimSingle(val) {
   const v = Number(val);
   return [v, v, v, v, v];
 }
+
+/* ─── BMI helpers ─── */
+function calcBmi(ft, inch, lbs) {
+  const inches = (parseFloat(ft) || 0) * 12 + (parseFloat(inch) || 0);
+  const w = parseFloat(lbs);
+  return inches && w ? (703 * w) / (inches * inches) : null;
+}
+function calcBmiMetric(cm, kg) {
+  const h = parseFloat(cm), w = parseFloat(kg);
+  return h && w ? w / ((h / 100) * (h / 100)) : null;
+}
+export function deriveBmi(a, mH, mW) {
+  if (mH && mW) return calcBmiMetric(a.heightCm, a.weightKg);
+  if (!mH && !mW) return calcBmi(a.heightFt, a.heightIn, a.weightLbs);
+  const inches = mH ? (parseFloat(a.heightCm) || 0) / 2.54
+    : (parseFloat(a.heightFt) || 0) * 12 + (parseFloat(a.heightIn) || 0);
+  const lbs = mW ? (parseFloat(a.weightKg) || 0) * 2.20462 : parseFloat(a.weightLbs);
+  return inches && lbs ? (703 * lbs) / (inches * inches) : null;
+}
+
+
+/**
+ * Builds the engine's formData from the kiosk questionnaire answers.
+ * Shared by the live flow and the admin Import Wizard so a re-scored import
+ * is identical to what the kiosk would have produced.
+ */
+export function buildClinicalFormData(answers, metricH, metricW) {
+  const bmi = deriveBmi(answers, metricH, metricW);
+  // BRCA1/2 germline mutations are also the driver behind hereditary breast and
+  // pancreatic cancer syndromes. A reported family history of either — without a
+  // confirmed negative or positive genetic test — is treated as an elevated,
+  // BRCA-associated risk signal (same scoring bucket the engine already uses for
+  // "other_elevated" hereditary findings), per AUA/NCCN guidance on hereditary risk.
+  const hasBrcaLinkedFamilyHistory = answers.familyHistoryBreastCancer === 'yes'
+    || answers.familyHistoryPancreaticCancer === 'yes';
+  const effectiveBrcaStatus = (answers.brca === 'yes' || answers.brca === 'no')
+    ? answers.brca
+    : (hasBrcaLinkedFamilyHistory ? 'other_elevated' : answers.brca);
+  return {
+    age: parseInt(answers.age),
+    race: answers.race,
+    ethnicity: answers.ethnicity || null,
+    familyHistory: FH_MAP[answers.familyHistory] ?? 0,
+    familyHistoryBreastCancer: answers.familyHistoryBreastCancer ?? 'unknown',
+    familyHistoryPancreaticCancer: answers.familyHistoryPancreaticCancer ?? 'unknown',
+    ipss: deriveIpssFromQol(answers.qol),
+    ipssQol: answers.qol,
+    shim: expandShimSingle(answers.shim),
+    dietPattern: answers.diet || 'other',
+    exercise: answers.exercise,
+    smoking: answers.smoking,
+    bmi: bmi ? parseFloat(bmi.toFixed(1)) : 22,
+    heightFt: answers.heightFt,
+    heightIn: answers.heightIn,
+    heightCm: answers.heightCm,
+    weightLbs: answers.weightLbs,
+    weightKg: answers.weightKg,
+    metricH,
+    metricW,
+    brcaStatus: effectiveBrcaStatus,
+    inflammationHistory: answers.inflammation === 'yes' ? 1 : 0,
+    chemicalExposure: answers.chemicalExposure ?? 'no',
+    comorbidityScore: Number(answers.comorbidities) || 0,
+    hypertension: null, hyperlipidemia: null, coronaryArteryDisease: null, diabetes: null,
+  };
+}

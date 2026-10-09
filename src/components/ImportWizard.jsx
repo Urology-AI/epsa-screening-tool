@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { UploadIcon } from 'lucide-react';
 import { saveClinicalSession } from '../services/clinicalSessionService';
 import { buildImportPlan, FORMAT_LABELS } from '../utils/sessionImport';
+import { calculateDynamicEPsa } from '../utils/dynamicCalculator';
+import { DEFAULT_CALCULATOR_CONFIG, calculateDynamicEPsaPost } from '@epsa/engine';
+
+// Same engine and config the live kiosk flow uses.
+const ENGINE = {
+  pre: (formData) => calculateDynamicEPsa(formData, DEFAULT_CALCULATOR_CONFIG),
+  post: (pre, step2) => calculateDynamicEPsaPost(pre, step2, DEFAULT_CALCULATOR_CONFIG),
+};
 import './ImportWizard.css';
 
 const CONSENT_OPTIONS = [
@@ -22,12 +30,28 @@ export default function ImportWizard({ uid, existingRefs, onClose, onImported })
     e.target.value = '';
     if (!picked.length) return;
     const files = await Promise.all(picked.map(async f => ({ name: f.name, text: await f.text() })));
-    setPlan(buildImportPlan(files, existingRefs));
+    setPlan(buildImportPlan(files, existingRefs, ENGINE));
     setStep(2);
   }
 
   function toggle(id) {
     setPlan(p => ({ ...p, entries: p.entries.map(en => en.id === id ? { ...en, include: !en.include } : en) }));
+  }
+
+  // Run the kiosk engine over every ticked row that came with someone else's score.
+  function handleRecalculate() {
+    setPlan(p => ({
+      ...p,
+      entries: p.entries.map(en => (en.include && en.rescore)
+        ? {
+            ...en,
+            before: en.session.engineResult?.score ?? null,
+            session: { ...en.session, ...en.rescore },
+            rescore: null,
+            warnings: en.warnings.filter(w => !/not rescored/.test(w)),
+          }
+        : en),
+    }));
   }
 
   async function handleImport() {
@@ -52,6 +76,7 @@ export default function ImportWizard({ uid, existingRefs, onClose, onImported })
   }
 
   const chosen = plan?.entries.filter(e => e.include).length ?? 0;
+  const recalcable = plan?.entries.filter(e => e.include && e.rescore).length ?? 0;
 
   return (
     <div className="iw-backdrop" role="dialog" aria-modal="true" aria-label="Import wizard">
@@ -88,7 +113,13 @@ export default function ImportWizard({ uid, existingRefs, onClose, onImported })
                           <td>{s.sessionRef}</td>
                           <td>{FORMAT_LABELS[en.format]}</td>
                           <td>{s.formData?.age ?? '—'}</td>
-                          <td>{s.engineResult?.score ?? '—'}</td>
+                          <td>
+                            {en.before != null && en.before !== s.engineResult?.score && <span className="iw-old">{en.before} → </span>}
+                            {s.engineResult?.score ?? '—'}
+                            {en.rescore && en.rescore.engineResult?.score !== s.engineResult?.score && (
+                              <div className="iw-note">kiosk engine: {en.rescore.engineResult?.score}</div>
+                            )}
+                          </td>
                           <td>{s.step2 ? 'Yes' : '—'}</td>
                           <td>
                             {en.exists && <span className="iw-tag iw-tag--warn">Replaces existing</span>}
@@ -127,6 +158,11 @@ export default function ImportWizard({ uid, existingRefs, onClose, onImported })
 
         <div className="iw-foot">
           {step === 2 && <button type="button" className="iw-btn" onClick={() => { setPlan(null); setStep(1); }}>Back</button>}
+          {step === 2 && recalcable > 0 && (
+            <button type="button" className="iw-btn" onClick={handleRecalculate} disabled={busy}>
+              Recalculate {recalcable} with kiosk engine
+            </button>
+          )}
           {step === 2 && (
             <button type="button" className="iw-btn iw-btn--primary" disabled={!chosen || busy} onClick={handleImport}>
               {busy ? 'Importing…' : `Import ${chosen} session${chosen !== 1 ? 's' : ''}`}

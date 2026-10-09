@@ -31,9 +31,9 @@ test('kiosk results unwraps engineResult and keeps ref + rawAnswers', () => {
   assert.deepEqual(session.rawAnswers, { age: '62' });
 });
 
-test('answers-only record is rejected, not imported', () => {
-  const { error } = convertRecord({ sessionRef: 'EP-1', rawAnswers: { age: '60' } });
-  assert.match(error, /raw answers/);
+test('answers with no valid age are rejected', () => {
+  const { error } = convertRecord({ sessionRef: 'EP-1', rawAnswers: { qol: '1', shim: '3' } });
+  assert.match(error, /incomplete/);
 });
 
 test('plan merges same ref across files and flags existing', () => {
@@ -49,4 +49,27 @@ test('plan merges same ref across files and flags existing', () => {
   assert.deepEqual(merged.session.step2, { psa: 3 });
   assert.equal(merged.session.status, 'STEP2_COMPLETE');
   assert.equal(plan.rejected.length, 1);
+});
+
+const ANSWERS = { age: '64', race: 'white', familyHistory: 'one', familyHistoryBreastCancer: 'no', familyHistoryPancreaticCancer: 'no', qol: '3', shim: '4', diet: 'mixed', exercise: 'moderate', smoking: 'never', comorbidities: '1', brca: 'no', heightFt: '5', heightIn: '10', weightLbs: '180', psaKnown: 'yes', psaValue: '4.2' };
+const ENGINE = { pre: fd => ({ score: fd.age }), post: (pre, s2) => ({ psaValue: s2.psa, pathwayMode: s2.pathwayMode }) };
+
+test('answers-only file is rebuilt into formData and scored on import', () => {
+  assert.equal(detectFormat(ANSWERS), 'answers');
+  assert.equal(detectFormat({ sessionRef: 'EP-1', rawAnswers: ANSWERS }), 'answers');
+  const plan = buildImportPlan([{ name: 'fail.json', text: JSON.stringify({ sessionRef: 'EP-20261002-ZZZZ', rawAnswers: ANSWERS }) }], new Set(), ENGINE);
+  const [e] = plan.entries;
+  assert.equal(e.session.formData.age, 64);
+  assert.equal(e.session.formData.familyHistory, 1);
+  assert.deepEqual(e.session.formData.shim, [4, 4, 4, 4, 4]);
+  assert.equal(e.session.engineResult.score, 64);
+  assert.equal(e.session.postResult.psaValue, 4.2);
+  assert.equal(e.rescore, null);
+});
+
+test('calculator rows keep their score until recalculated', () => {
+  const plan = buildImportPlan([{ name: 'c.json', text: JSON.stringify(calcPart1) }], new Set(), ENGINE);
+  const [e] = plan.entries;
+  assert.equal(e.session.engineResult.score, 7);
+  assert.equal(e.rescore.engineResult.score, 62);
 });
