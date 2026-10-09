@@ -2,15 +2,7 @@ import React, { useState } from 'react';
 import { UploadIcon } from 'lucide-react';
 import { saveClinicalSession } from '../services/clinicalSessionService';
 import { buildImportPlan, FORMAT_LABELS } from '../utils/sessionImport';
-import { calculateDynamicEPsa } from '../utils/dynamicCalculator';
-import { DEFAULT_CALCULATOR_CONFIG, calculateDynamicEPsaPost } from '@epsa/engine';
-
-// Same engine and config the live kiosk flow uses.
-const ENGINE = {
-  pre: (formData) => calculateDynamicEPsa(formData, DEFAULT_CALCULATOR_CONFIG),
-  post: (pre, step2) => calculateDynamicEPsaPost(pre, step2, DEFAULT_CALCULATOR_CONFIG),
-};
-import './ImportWizard.css';
+import { KIOSK_ENGINE as ENGINE } from '../utils/kioskEngine';
 
 const CONSENT_OPTIONS = [
   { value: 'file', label: 'Keep what the file says' },
