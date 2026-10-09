@@ -3,13 +3,15 @@ import {
   TrashIcon, DownloadIcon, UploadIcon, PrinterIcon,
   ChevronDownIcon, ChevronUpIcon, ArrowLeftIcon,
   SendIcon, RefreshCwIcon, PlusIcon, ZapIcon,
-  CloudUploadIcon, CloudDownloadIcon
+  CloudUploadIcon, CloudDownloadIcon, CalculatorIcon
 } from 'lucide-react';
-import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, mergeSessions, setSessionConsent, updateSessionStep2 } from '../services/clinicalSessionService';
+import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, mergeSessions, setSessionConsent, updateSessionStep2, updateSessionResults } from '../services/clinicalSessionService';
 import { isTursoConfigured, pushSessions, pullSessions, getSyncedKeys, syncKey, markPendingDelete, getPendingDeleteCount, isPushable, markRedcapPushed } from '../services/tursoService';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
 import ImportWizard from './ImportWizard.jsx';
+import { KIOSK_ENGINE } from '../utils/kioskEngine';
+import { rescoreSession } from '../utils/sessionImport';
 import './ClinicalSessionsManager.css';
 
 const TIER_COLORS = {
@@ -178,6 +180,14 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
     exportSessionsAsJson([session]);
   }
 
+  function handleRecalc() {
+    try {
+      const r = rescoreSession(session, KIOSK_ENGINE);
+      updateSessionResults([{ id: session.id, ...r }]);
+      onUpdated?.();
+    } catch { /* leave the stored scores untouched */ }
+  }
+
   return (
     <div className="csm-row">
       <button
@@ -231,6 +241,9 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
             </button>
             <button type="button" className="csm-action-btn" onClick={handleExportThis} title="Export this session as JSON">
               <DownloadIcon size={14} /> Export
+            </button>
+            <button type="button" className="csm-action-btn" onClick={handleRecalc} disabled={!session.formData} title="Re-run the ePSA engine on this patient's saved answers">
+              <CalculatorIcon size={14} /> Run ePSA
             </button>
             {!hasPost && (
               <button
@@ -354,6 +367,7 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [confirmRecalc, setConfirmRecalc] = useState(false);
   const [redcapTest, setRedcapTest] = useState(null); // null | 'testing' | 'ok' | 'err'
   const [confirmClear, setConfirmClear] = useState(false); // false | 'confirm' | 'exporting'
   const [filterTier, setFilterTier] = useState('all'); // 'all' | 'low' | 'intermediate' | 'elevated'
@@ -406,6 +420,24 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
       setImporting(false);
       e.target.value = '';
     }
+  }
+
+  function handleRecalcAll() {
+    if (confirmRecalc !== 'confirm') { setConfirmRecalc('confirm'); return; }
+    setConfirmRecalc(false);
+    let changed = 0; let failed = 0;
+    const updates = [];
+    for (const s of sessions) {
+      if (!s.formData) { failed += 1; continue; }
+      try {
+        const r = rescoreSession(s, KIOSK_ENGINE);
+        if (r.engineResult?.score !== s.engineResult?.score) changed += 1;
+        updates.push({ id: s.id, ...r });
+      } catch { failed += 1; }
+    }
+    updateSessionResults(updates);
+    setImportMsg(`Recalculated ${updates.length} session${updates.length !== 1 ? 's' : ''} — ${changed} score${changed !== 1 ? 's' : ''} changed${failed ? `, ${failed} could not be calculated` : ''}. Push to Cloud to update synced copies.`);
+    refresh();
   }
 
   function handleExportAll() {
@@ -598,6 +630,16 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
         </button>
         <button type="button" className="csm-toolbar-btn" onClick={handleExportAll} disabled={!sessions.length}>
           <DownloadIcon size={15} /> Export All
+        </button>
+        <button
+          type="button"
+          className={`csm-toolbar-btn${confirmRecalc ? ' csm-toolbar-btn--confirm' : ''}`}
+          onClick={handleRecalcAll}
+          onBlur={() => setConfirmRecalc(false)}
+          disabled={!sessions.length}
+          title="Re-run the ePSA engine on every saved session and overwrite the stored scores"
+        >
+          <CalculatorIcon size={15} /> {confirmRecalc ? 'Overwrite scores? Tap again' : 'Run ePSA on All'}
         </button>
         <label className={`csm-toolbar-btn${importing ? ' csm-toolbar-btn--loading' : ''}`}>
           <UploadIcon size={15} /> {importing ? 'Importing…' : 'Import JSON'}

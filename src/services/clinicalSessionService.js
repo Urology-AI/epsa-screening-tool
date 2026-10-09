@@ -135,6 +135,16 @@ export async function setSessionConsent(_uid, session, consented) {
   setLocal(sessions);
 }
 
+/** Overwrite the stored scores for one or more sessions: [{ id, engineResult, postResult }]. */
+export function updateSessionResults(updates) {
+  const byId = new Map(updates.map(u => [u.id, u]));
+  setLocal(getLocal().map(s => {
+    const u = byId.get(s.id);
+    if (!u) return s;
+    return { ...s, engineResult: u.engineResult, preResult: u.engineResult, ...(u.postResult ? { postResult: u.postResult } : {}) };
+  }));
+}
+
 export async function updateSessionStep2(_uid, session, step2Data) {
   const sessions = getLocal().map(s => {
     if (s.id !== session.id) return s;
