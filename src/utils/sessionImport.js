@@ -8,6 +8,8 @@
 //   calc-part1     calculator Part 1 export:  { part:'part1', formData, ... } / part1Data
 // No dependencies, so it also runs under node --test.
 
+import { buildClinicalFormData } from './epsaFormUtils.js';
+
 const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
 const nonEmpty = (o) => isObj(o) && Object.keys(o).length > 0;
 
@@ -16,10 +18,17 @@ export const FORMAT_LABELS = {
   'kiosk-results': 'Kiosk results export',
   'calc-complete': 'Calculator (Part 1 + 2)',
   'calc-part1': 'Calculator (Part 1)',
+  answers: 'Kiosk answers (failed session)',
 };
+
+// The bare questionnaire answers: { age, race, familyHistory, qol, shim, ... }
+function isAnswersObject(r) {
+  return isObj(r) && 'age' in r && 'qol' in r && 'shim' in r && !r.formData && !r.part1Data && !r.step1;
+}
 
 export function detectFormat(r) {
   if (!isObj(r)) return null;
+  if (isAnswersObject(r) || (isObj(r.rawAnswers) && !r.formData && !r.step1 && !r.part1Data)) return 'answers';
   if (r.version === 'epsa-session-v1' || r.step1 || r.preResult || r.engineResult) return 'session';
   if (r.part1Data) return r.part === 'complete' || nonEmpty(r.part2Data) ? 'calc-complete' : 'calc-part1';
   if (r.formData && r.part === 'part1') return 'calc-part1';
@@ -47,7 +56,18 @@ export function convertRecord(r) {
   const warnings = [];
   let formData; let engineResult; let step2; let postResult;
 
-  if (format === 'kiosk-results') {
+  if (format === 'answers') {
+    const a = isAnswersObject(r) ? r : r.rawAnswers;
+    // Unit toggles are UI state, not stored in answers; infer from what was filled in.
+    const metricH = !!a.heightCm && !a.heightFt;
+    const metricW = !!a.weightKg && !a.weightLbs;
+    formData = buildClinicalFormData(a, metricH, metricW);
+    engineResult = null;
+    postResult = null;
+    step2 = null;
+    r = isAnswersObject(r) ? { rawAnswers: a } : r;
+    warnings.push('Rebuilt from raw answers — scored on import');
+  } else if (format === 'kiosk-results') {
     formData = r.formData;
     engineResult = r.result?.engineResult ?? r.result ?? null;
     postResult = r.postResult ?? r.result?.postResult ?? null;
@@ -60,8 +80,11 @@ export function convertRecord(r) {
     postResult = r.postResult ?? (step2 ? r.part2Result ?? null : null);
   }
   if (!isObj(formData) || !Object.keys(formData).length) return { error: 'no Part 1 data found' };
+  if (format === 'answers' && !(formData.age >= 18 && formData.age <= 99)) {
+    return { error: 'answers incomplete (missing a valid age)' };
+  }
 
-  if (!engineResult) warnings.push('No Part 1 result in file — score will be blank');
+  if (!engineResult && format !== 'answers') warnings.push('No Part 1 result in file — score will be blank');
   if (format.startsWith('calc')) warnings.push('Score is as calculated by the calculator, not rescored');
   if (step2 && !postResult) warnings.push('Part 2 inputs present but no Part 2 result');
 
@@ -81,7 +104,7 @@ export function convertRecord(r) {
       engineResult,
       step2,
       postResult,
-      rawAnswers: r.rawAnswers ?? null,
+      rawAnswers: format === 'answers' ? (isAnswersObject(r) ? r : r.rawAnswers) : (r.rawAnswers ?? null),
       finalCategory: r.finalCategory ?? null,
       consented: r.consented ?? null,
       status: step2 ? 'STEP2_COMPLETE' : (r.status ?? 'STEP1_COMPLETE'),
@@ -90,11 +113,26 @@ export function convertRecord(r) {
 }
 
 /**
+ * Score a session with the kiosk engine. engine = { pre(formData), post(engineResult, step2) }
+ * is injected so this module stays dependency-free. Returns { engineResult, postResult }.
+ */
+export function rescoreSession(session, engine) {
+  const engineResult = engine.pre(session.formData);
+  const psa = parseFloat(session.step2?.psa ?? session.rawAnswers?.psaValue);
+  const hasPsa = Number.isFinite(psa) && psa >= 0
+    && (session.step2 || session.rawAnswers?.psaKnown === 'yes');
+  const postResult = hasPsa
+    ? engine.post(engineResult, { ...(session.step2 || {}), psa, pathwayMode: 'post_psa' })
+    : null;
+  return { engineResult, postResult };
+}
+
+/**
  * Parse loaded files into reviewable entries.
  * files: [{ name, text }]. existingRefs: Set of sessionRefs already on the device.
  * Records sharing a sessionRef inside the batch are merged (Part 2 fills Part 1).
  */
-export function buildImportPlan(files, existingRefs = new Set()) {
+export function buildImportPlan(files, existingRefs = new Set(), engine = null) {
   const byRef = new Map();
   const rejected = [];
   for (const f of files) {
@@ -124,11 +162,21 @@ export function buildImportPlan(files, existingRefs = new Set()) {
       prev.warnings = [...new Set([...prev.warnings, ...out.warnings, 'Merged from more than one file'])];
     });
   }
-  const entries = [...byRef.values()].map((e, idx) => ({
-    id: idx,
-    ...e,
-    exists: existingRefs.has(e.session.sessionRef),
-    include: true,
-  }));
+  const entries = [...byRef.values()].map((e, idx) => {
+    const entry = { id: idx, ...e, exists: existingRefs.has(e.session.sessionRef), include: true, rescore: null };
+    if (engine) {
+      try {
+        entry.rescore = rescoreSession(e.session, engine);
+        // Answers-only records have no score at all, so they are always scored.
+        if (!e.session.engineResult) {
+          entry.session = { ...e.session, ...entry.rescore };
+          entry.rescore = null;
+        }
+      } catch (err) {
+        entry.warnings = [...entry.warnings, `Could not score: ${err.message}`];
+      }
+    }
+    return entry;
+  });
   return { entries, rejected };
 }
