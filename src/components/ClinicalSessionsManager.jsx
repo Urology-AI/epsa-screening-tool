@@ -9,6 +9,7 @@ import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, e
 import { isTursoConfigured, pushSessions, pullSessions, getSyncedKeys, syncKey, markPendingDelete, getPendingDeleteCount, isPushable, markRedcapPushed } from '../services/tursoService';
 import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
+import ImportWizard from './ImportWizard.jsx';
 import './ClinicalSessionsManager.css';
 
 const TIER_COLORS = {
@@ -352,6 +353,7 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
+  const [showWizard, setShowWizard] = useState(false);
   const [redcapTest, setRedcapTest] = useState(null); // null | 'testing' | 'ok' | 'err'
   const [confirmClear, setConfirmClear] = useState(false); // false | 'confirm' | 'exporting'
   const [filterTier, setFilterTier] = useState('all'); // 'all' | 'low' | 'intermediate' | 'elevated'
@@ -601,6 +603,9 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
           <UploadIcon size={15} /> {importing ? 'Importing…' : 'Import JSON'}
           <input type="file" accept=".json" hidden onChange={handleImport} />
         </label>
+        <button type="button" className="csm-toolbar-btn" onClick={() => setShowWizard(true)} title="Import kiosk or calculator JSON files with a preview">
+          <UploadIcon size={15} /> Import Wizard
+        </button>
         {tursoReady && (
           <>
             <button
@@ -660,6 +665,15 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
           </button>
         )}
       </div>
+
+      {showWizard && (
+        <ImportWizard
+          uid={uid}
+          existingRefs={new Set(sessions.map(s => s.sessionRef).filter(Boolean))}
+          onClose={() => setShowWizard(false)}
+          onImported={refresh}
+        />
+      )}
 
       {importMsg && (
         <div className={`csm-import-msg${/failed/i.test(importMsg) ? ' csm-import-msg--err' : ''}`}>
