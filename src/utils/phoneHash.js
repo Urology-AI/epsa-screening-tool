@@ -14,7 +14,7 @@
  * - SHA-256 is a one-way function — the phone number cannot be recovered from the hash
  * - A salt (EPSA_PHONE_SALT) is mixed in to prevent rainbow table attacks
  * - The hash is deleted after PSA linkage is complete
- * - No phone number is ever written to localStorage, Turso, or REDCap
+ * - No phone number is ever written to localStorage or REDCap
  *
  * IRB NOTE:
  * The hash exists only during the window between survey completion and PSA entry.

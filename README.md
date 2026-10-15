@@ -8,16 +8,13 @@ Built by the Urology AI Lab, Icahn School of Medicine at Mount Sinai — Ashutos
 
 ## What it does
 
-**Kiosk (`/`)** — Patient-facing Part 1 questionnaire (demographics, family history, symptoms). PSA is not collected at the event. On completion, the patient receives a printed card with an `EP-YYYYMMDD-XXXX` reference code. The session is saved to the device and synced to Turso (cloud SQLite).
+**Kiosk (`/`)** — Patient-facing Part 1 questionnaire (demographics, family history, symptoms). PSA is not collected at the event. On completion, the patient receives a printed card with an `EP-YYYYMMDD-XXXX` reference code. The session is saved on the device only — nothing is uploaded.
 
 **Admin (`/admin`)** — PIN-gated staff portal. Staff can:
 - View all saved sessions
-- Enter PSA + PI-RADS results once lab values return (stored against the EP ref in Turso)
-- Push/pull sessions to the cloud
+- Enter PSA + PI-RADS results once lab values return (stored against the EP ref on the device)
 - Export sessions as JSON
-- Submit to REDCap (via Cloudflare Worker proxy)
-
-**Cross-tool handoff** — When a patient later opens the main [ePSA Calculator](https://github.com/Urology-AI/e-psa-calculator) and enters their `EP-` ref, the full session (Part 1 + any PSA/PI-RADS entered by staff) loads automatically for Part 2 risk calculation.
+- Download a **REDCap CSV** of consented sessions and upload it with REDCap's Data Import Tool
 
 ---
 
@@ -26,52 +23,32 @@ Built by the Urology AI Lab, Icahn School of Medicine at Mount Sinai — Ashutos
 ```
 Browser (kiosk / tablet)
 │
-├── Part 1 form → localStorage
-├── localStorage → Turso (cloud SQLite) via @libsql/client
-└── /admin → REDCap via Cloudflare Worker proxy (token never in frontend)
-
-Turso
-└── clinical_sessions table
-    ├── session_ref (EP-YYYYMMDD-XXXX)
-    ├── full_record (JSON)
-    └── consented (boolean)
+├── Part 1 form → localStorage (this device only)
+└── /admin → "REDCap CSV" download → staff upload via REDCap Data Import Tool
 ```
 
-Secrets are injected at build time via CI environment variables and never committed to the repository.
+There is no cloud database, no proxy and no REDCap API token. The browser
+makes no network calls beyond Mount Sinai Entra sign-in for `/admin`
+(enforced by `test/noUpload.test.mjs` and the page CSP).
 
 ---
 
 ## Environment variables
 
-Set these in Vercel (or GitHub Actions secrets). They are baked into the JS bundle at build time.
-
 | Variable | Description |
 |---|---|
-| `VITE_TURSO_URL` | Turso database URL (`libsql://...`) |
-| `VITE_TURSO_AUTH_TOKEN` | Turso auth token — scope to this database only, not a root token |
-| `VITE_CLINICAL_ADMIN_PIN` | PIN for the `/admin` route (default `1234` if unset — always override in production) |
-| `VITE_REDCAP_PROXY_URL` | URL of the Cloudflare Worker REDCap proxy |
+| `VITE_AZURE_CLIENT_ID` / `VITE_AZURE_TENANT_ID` | Entra app registration for `/admin` sign-in (public identifiers) |
 
 ---
 
-## REDCap proxy (Cloudflare Worker)
+## REDCap import
 
-The REDCap API token never lives in the frontend. A Cloudflare Worker acts as a proxy:
-
-```
-Browser → POST /  →  Worker → REDCap API
-```
-
-Worker source is in `worker/redcap-proxy.js`. Deploy with:
-
-```bash
-cd worker
-npx wrangler deploy
-# Set secrets:
-npx wrangler secret put REDCAP_TOKEN
-npx wrangler secret put REDCAP_API_URL
-npx wrangler secret put ALLOWED_ORIGIN   # your deployed app URL
-```
+1. In `/admin` → Saved Sessions, click **REDCap CSV**. The first click exports
+   consented sessions not yet exported; when none are new it re-exports all
+   consented sessions. Sessions where the patient declined are never included.
+2. In REDCap: **Applications → Data Import Tool**, upload the CSV, review, import.
+   Columns match `redcap_data_dictionary_clinical_mode.csv`; `record_id` is the
+   `EP-` session ref, so re-importing updates the same record.
 
 ---
 
@@ -113,8 +90,7 @@ npm run dev
 ## Security notes
 
 - **No PHI in URLs** — session refs are non-identifying codes
-- **Consent gate** — sessions with `consented: false` are never pushed to Turso
+- **Consent gate** — sessions with `consented: false` are never included in the REDCap export
 - **Admin PIN** — rotate `VITE_CLINICAL_ADMIN_PIN` periodically; redeploy to update
-- **Turso token** — use a database-scoped token, not a root/org token
-- **REDCap token** — lives only in Cloudflare Worker secrets, never in the browser bundle
+- **No cloud storage** — sessions never leave the device except as a CSV staff download and import into REDCap
 - **Idle reset** — 90 s of inactivity triggers a 15 s countdown then full reset, protecting the next patient's privacy
