@@ -4,7 +4,7 @@ import { ArrowRightIcon, RotateCcwIcon, EditIcon, TrendingUpIcon, ChevronDownIco
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import ClinicalModeResultPrint from './ClinicalModeResultPrint.jsx';
 import ClinicianChecklist from './ClinicianChecklist.jsx';
-import { saveChecklistToTurso } from '../services/tursoService';
+import { setSessionChecklist } from '../services/clinicalSessionService';
 import './ClinicalModeResult.css';
 
 
@@ -39,7 +39,7 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
   function handleChecklistSubmit(data) {
     setChecklistData(data);
     setChecklistDone(true);
-    saveChecklistToTurso(sessionRef, data).catch(() => {});
+    setSessionChecklist(sessionRef, data);
   }
 
   function handleChecklistSkip() {
@@ -134,14 +134,14 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
             className={`qer-cloud-btn${cloudStatus ? ` qer-cloud-btn--${cloudStatus}` : ''}`}
             onClick={() => setShowCloudNote(v => !v)}
             aria-label="Data storage info"
-            title={cloudStatus === 'saved' ? 'Saved in the database'
-              : cloudStatus === 'saving' ? 'Saving to the database…'
-              : cloudStatus === 'error' ? 'Could not save to the database'
+            title={cloudStatus === 'saved' ? 'Saved on this device for the study'
+              : cloudStatus === 'saving' ? 'Saving…'
+              : cloudStatus === 'error' ? 'Could not save on this device'
               : cloudStatus === 'local' ? 'Saved on this device only'
               : 'About data storage'}
           >
             <CloudIcon size={15} />
-            {cloudStatus === 'saved' && <span className="qer-cloud-label">Saved in database</span>}
+            {cloudStatus === 'saved' && <span className="qer-cloud-label">Saved for study</span>}
             {cloudStatus === 'saving' && <span className="qer-cloud-label">Saving…</span>}
             {cloudStatus === 'error' && <span className="qer-cloud-label">Not saved</span>}
             {cloudStatus === 'local' && <span className="qer-cloud-label">On this device only</span>}
@@ -152,20 +152,20 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
         <div className="qer-cloud-note">
           {cloudStatus === 'local' ? (
             <>
-              <strong>Saved on this device only.</strong> You chose not to share your responses, so nothing was sent to the study database. If you have since signed a consent form, you can share them now.
+              <strong>Saved on this device only.</strong> You chose not to share your responses, so they will not be added to the study. If you have since signed a consent form, you can share them now.
               {onConsentNow && (
                 <button type="button" className="qer-action-btn qer-action-btn--secondary qer-consent-now-btn"
                   onClick={() => { setShowCloudNote(false); onConsentNow(); }}>
-                  <CloudIcon size={14} aria-hidden="true" /> I&apos;ve signed the consent form — save to database
+                  <CloudIcon size={14} aria-hidden="true" /> I&apos;ve signed the consent form — add to study
                 </button>
               )}
             </>
           ) : cloudStatus === 'saved' ? (
-            <><strong>Saved in the database.</strong> This response was stored in the secure study database and will be transferred to the REDCap research registry. No personally identifiable information is collected.</>
+            <><strong>Saved for the study.</strong> This response is stored on this device only. Study staff transfer it to the Mount Sinai REDCap research registry. Nothing is sent to any cloud service. No personally identifiable information is collected.</>
           ) : cloudStatus === 'error' ? (
-            <><strong>Could not reach the database.</strong> Your response is saved on this device and will be uploaded when staff sync sessions. No personally identifiable information is collected.</>
+            <><strong>Could not save on this device.</strong> Please let a staff member know. No personally identifiable information is collected.</>
           ) : (
-            <><strong>Saved temporarily to the cloud.</strong> This response is stored in a secure database and will be automatically transferred to the REDCap research registry. Once transferred, it is deleted from temporary storage. No personally identifiable information is collected.</>
+            <><strong>Stored on this device.</strong> Responses stay on this device. With your consent, study staff transfer them to the Mount Sinai REDCap research registry. Nothing is sent to any cloud service. No personally identifiable information is collected.</>
           )}
           <button type="button" className="qer-cloud-note-close" onClick={() => setShowCloudNote(false)}>Dismiss</button>
         </div>
@@ -176,10 +176,10 @@ export default function ClinicalModeResult({ result, postResult = null, answers,
         <div className="qer-consent-banner">
           <p>
             <strong>Your results are saved on this device only.</strong> Signed
-            a consent form? You can add this response to the study database.
+            a consent form? You can add this response to the study.
           </p>
           <button type="button" className="qer-action-btn qer-action-btn--secondary" onClick={onConsentNow}>
-            <CloudIcon size={14} aria-hidden="true" /> Save to database
+            <CloudIcon size={14} aria-hidden="true" /> Add to study
           </button>
         </div>
       )}

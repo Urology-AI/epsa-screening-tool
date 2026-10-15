@@ -8,16 +8,12 @@ import { fieldReferences } from '../utils/fieldReferences';
 import { calculateDynamicEPsa } from '../utils/dynamicCalculator';
 import { DEFAULT_CALCULATOR_CONFIG, calculateDynamicEPsaPost } from '@epsa/engine';
 import { deriveBmi, buildClinicalFormData } from '../utils/epsaFormUtils';
-import { submitToRedcap } from '../utils/redcapSubmit';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
 import { ZapIcon, ChevronRightIcon, RotateCcwIcon, CheckIcon, FlaskConicalIcon, ArrowLeftIcon, ShieldCheckIcon, FileTextIcon, PrinterIcon } from 'lucide-react';
 import ClinicalModePrintForm from './ClinicalModePrintForm.jsx';
 import QrCodePoster from './QrCodePoster.jsx';
 import { getOrCreateUid, saveClinicalSession, generateSessionRef, setSessionPhoneHash } from '../services/clinicalSessionService';
 import PhoneHashCapture from './PhoneHashCapture.jsx';
-import { isTursoConfigured, pushSessions, uploadPublicSession, markRedcapPushed, syncKey } from '../services/tursoService';
-import { hasAuthToken } from '../services/authToken';
-import { getTurnstileToken } from '../services/turnstile';
 
 /* ─── Chip group ─── */
 const Chips = ({ options, value, onChange, ariaLabel }) => (
@@ -124,8 +120,9 @@ function BusStudyConsent({ onAgree, onDecline }) {
 
 /* ─── Storage consent question (asked before results) ───
    Designed for patients screening directly on their own phone: if they
-   signed the paper consent form their session is saved to the study
-   database; otherwise results stay on the device only. */
+   signed the paper consent form their session is marked for the study
+   (staff later export it to REDCap); otherwise it is never exported. Either
+   way the session is stored on this device only. */
 function StorageConsentQuestion({ onYes, onNo }) {
   return (
     <div className="qef-consent-q">
@@ -136,8 +133,8 @@ function StorageConsentQuestion({ onYes, onNo }) {
         screening study today?
       </p>
       <p className="qef-consent-q-note">
-        If yes, your anonymous responses are saved to the secure study database.
-        If no, your results are shown and kept on this device only — no data leaves.
+        If yes, study staff add your anonymous responses to the Mount Sinai study registry.
+        If no, your results are shown and kept on this device only.
       </p>
       <div className="qef-consent-q-actions">
         <button type="button" className="qef-submit-btn qef-submit-btn--ready" onClick={onYes}>
@@ -582,8 +579,8 @@ export default function ClinicalModeFlow() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /** Save the session with the patient's consent choice. Consented sessions
-   *  go to Turso + REDCap; non-consented ones stay on this device only. */
+  /** Save the session on this device with the patient's consent choice.
+   *  Nothing is uploaded: staff export consented sessions to REDCap from /admin. */
   function persistSession(didConsent, { formData, engineResult, postResult = null }, ref) {
     const localSave = uid
       ? saveClinicalSession(uid, { formData, engineResult, postResult, sessionRef: ref, rawAnswers: answers, consented: didConsent, unitCode: unitCode || undefined }).catch(() => null)
@@ -592,51 +589,8 @@ export default function ClinicalModeFlow() {
       setCloudStatus('local');
       return;
     }
-    if (isTursoConfigured()) {
-      setCloudStatus('saving');
-      localSave
-        .then((id) => {
-          const record = {
-            id: id ?? ref,
-            sessionRef: ref,
-            createdAt: new Date().toISOString(),
-            formData,
-            engineResult,
-            postResult,
-            rawAnswers: answers,
-            consented: true,
-            unitCode: unitCode || undefined,
-          };
-
-          // Signed-in staff use the authenticated path, which marks the row as
-          // staff-entered and can update it later. The public tool has no
-          // signed-in user, so it uses the insert-only upload instead.
-          if (hasAuthToken()) return pushSessions([record]);
-
-          // Public upload: mint a Turnstile token at submit time. Tokens are
-          // single-use and short-lived, so one taken at page load would often
-          // be stale by the time a patient finishes answering.
-          return getTurnstileToken()
-            .catch(() => null) // fall through; the Worker decides whether to accept
-            .then((turnstileToken) => uploadPublicSession(record, ref, turnstileToken))
-            .then((res) => {
-              if (!res.ok) throw new Error(res.reason || 'upload_failed');
-            });
-        })
-        .then(() => setCloudStatus('saved'))
-        .catch(() => setCloudStatus('error'));
-    }
-
-    // REDCap is never reached from the public flow: writing to the study
-    // database requires a verified identity. Staff review uploaded sessions in
-    // /admin and push them from there, where the request carries their token.
-    if (hasAuthToken()) {
-      submitToRedcap(formData, ref).then((res) => {
-        if (res.success && isTursoConfigured()) {
-          markRedcapPushed({ id: ref, sessionRef: ref }).catch(() => {});
-        }
-      }).catch(() => {});
-    }
+    setCloudStatus('saving');
+    localSave.then((id) => setCloudStatus(id ? 'saved' : 'error'));
   }
 
   function handleStorageConsent(didConsent) {
@@ -647,7 +601,7 @@ export default function ClinicalModeFlow() {
   }
 
   /** Patient consents after seeing results (e.g. signs the form afterwards):
-   *  upgrade the saved session and push it to the cloud. */
+   *  upgrade the saved session so it is included in the REDCap export. */
   function handleConsentNow() {
     setConsented(true);
     persistSession(true, result, sessionRef);
@@ -684,13 +638,6 @@ export default function ClinicalModeFlow() {
   }
 
   async function handleStudyConsentAgree() {
-    if (result?.formData) {
-      submitToRedcap(result.formData, sessionRef).then((res) => {
-        if (res.success && isTursoConfigured() && sessionRef) {
-          markRedcapPushed({ id: sessionRef, sessionRef }).catch(() => {});
-        }
-      }).catch(() => {});
-    }
     saveBusflowAndNavigate(true);
   }
 

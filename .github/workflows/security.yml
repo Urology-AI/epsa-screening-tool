@@ -4,9 +4,8 @@ name: Security
 #   Layer 1 = .githooks/pre-push (blocks secrets at the developer's machine)
 #   Layer 2 = this workflow
 #
-# The credential that matters most here is the Turso database token. It is a
-# Worker secret now (worker/turso-proxy.js) and must never reappear in the
-# browser bundle.
+# The app holds no credential and stores sessions on the device only (no cloud
+# database). These checks keep it that way.
 
 on:
   push:
@@ -62,12 +61,12 @@ jobs:
       - name: Assert server credentials are not read from src/
         run: ./security/check-server-secrets.sh src
 
-      # The browser must not open a database connection at all — every clinical
-      # session read or write goes through the Entra-gated Worker.
+      # The browser must not open a database connection at all — sessions stay
+      # in localStorage and reach REDCap only as a CSV staff import.
       - name: Assert no direct database client in browser code
         run: |
           if grep -rn "@libsql/client" src/ 2>/dev/null; then
-            echo "::error::src/ imports a Turso client directly; use the proxy Worker"
+            echo "::error::src/ imports a database client; sessions must stay on the device"
             exit 1
           fi
           echo "OK: browser code holds no database client."

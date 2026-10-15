@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { submitToRedcap } from '../utils/redcapSubmit';
+import { saveClinicalSession } from '../services/clinicalSessionService';
 import './StaffDataEntry.css';
 
 const EMPTY = {
@@ -25,7 +25,7 @@ function genUuid() {
   return 'cm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 }
 
-// Build formData shape compatible with buildClinicalRecord in redcapSubmit.js
+// Build formData shape compatible with buildClinicalRecord in redcapExport.js
 function buildFormData(f) {
   const shimTotalNum = f.shimTotal === '' ? null : Number(f.shimTotal);
   // Distribute shim total across 5 questions (max 5 each)
@@ -129,14 +129,17 @@ export default function StaffDataEntry() {
     setStatus(null);
     const ref = form.sessionRef.trim() || genUuid();
     const formData = buildFormData(form);
-    const res = await submitToRedcap(formData, ref);
-    setSubmitting(false);
-    if (res.success) {
+    // Saved on this device as a consented session; it goes to REDCap with
+    // the next CSV export from Saved Sessions.
+    try {
+      await saveClinicalSession(null, { formData, sessionRef: ref, consented: true });
       setStatus({ ok: true, recordId: ref });
       setForm(EMPTY);
       setTimeout(() => ageRef.current?.focus(), 50);
-    } else {
-      setStatus({ ok: false, error: res.error || 'Submission failed' });
+    } catch (err) {
+      setStatus({ ok: false, error: err?.message || 'Save failed' });
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -153,7 +156,7 @@ export default function StaffDataEntry() {
 
       {status?.ok && (
         <div className="sde-banner sde-banner--ok">
-          Submitted — Record ID: <strong>{status.recordId}</strong>
+          Saved — Record ID: <strong>{status.recordId}</strong>
         </div>
       )}
       {status && !status.ok && (
@@ -364,7 +367,7 @@ export default function StaffDataEntry() {
             className="sde-btn sde-btn--primary"
             disabled={submitting}
           >
-            {submitting ? 'Submitting…' : 'Submit to REDCap'}
+            {submitting ? 'Saving…' : 'Save for REDCap export'}
           </button>
           <button
             type="button"

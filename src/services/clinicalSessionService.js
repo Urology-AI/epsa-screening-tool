@@ -1,5 +1,6 @@
 // Standalone version — no Firebase dependency. Storage is localStorage-only.
-// Sessions are pushed to Turso via tursoService.js for cross-device access.
+// Nothing here leaves the device; staff move consented sessions into REDCap
+// with the CSV export in utils/redcapExport.js.
 
 const LOCAL_KEY = 'epsa_clinical_sessions';
 const DEVICE_KEY = 'epsa_device_id';
@@ -115,17 +116,17 @@ export async function importSessionsFromFile(_uid, file) {
   return items.length;
 }
 
-export function mergeSessions(records) {
-  const keyOf = s => s.sessionRef ?? s.id;
-  const local = getLocal();
-  const localKeys = new Set(local.map(keyOf));
-  const incomingKeys = new Set(records.map(keyOf));
-  const merged = [
-    ...records,
-    ...local.filter(s => !incomingKeys.has(keyOf(s))),
-  ].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-  setLocal(merged);
-  return records.filter(s => !localKeys.has(keyOf(s))).length;
+/** Attach the clinician impact checklist to the session with this ref. */
+export function setSessionChecklist(sessionRef, checklistData) {
+  if (!sessionRef) return;
+  const data = { ...checklistData, savedAt: new Date().toISOString() };
+  setLocal(getLocal().map(s => (s.sessionRef === sessionRef ? { ...s, checklistData: data } : s)));
+}
+
+/** Stamp sessions as included in a REDCap CSV export. */
+export function markSessionsRedcapExported(ids, at = new Date().toISOString()) {
+  const set = new Set(ids);
+  setLocal(getLocal().map(s => (set.has(s.id) ? { ...s, redcapPushedAt: at } : s)));
 }
 
 export async function setSessionConsent(_uid, session, consented) {

@@ -1,14 +1,10 @@
 /**
- * REDCap submission for the screening tool via serverless proxy.
+ * REDCap export for the screening tool — a CSV for REDCap's Data Import Tool.
  * Fields match redcap_data_dictionary_clinical_mode.csv exactly.
  *
- * SECURITY: The REDCap API token must NEVER appear in frontend code or VITE_* env vars.
- * All REDCap calls are proxied through the Cloudflare Worker in worker/ which holds
- * the token as a Worker secret (wrangler secret put REDCAP_TOKEN). Only non-sensitive
- * record data is sent to the proxy; the token never reaches the browser.
- *
- * Set VITE_REDCAP_PROXY_URL to the deployed worker URL. When unset, submission
- * is skipped and reported as a failure so callers fall back gracefully.
+ * Nothing is transmitted from here: sessions live in this device's
+ * localStorage, and staff upload the downloaded CSV into REDCap themselves.
+ * No API token, proxy or cloud database is involved.
  */
 
 /**
@@ -106,7 +102,7 @@ function buildClinicalRecord(formData, sessionRef, checklistData) {
     clinician_influence:     checklistData?.influence ?? '',
     clinician_action:        checklistData?.action ?? '',
     clinician_notes:         checklistData?.notes ?? '',
-    clinician_checklist_at:  checklistData ? new Date().toISOString() : '',
+    clinician_checklist_at:  checklistData ? (checklistData.savedAt ?? new Date().toISOString()) : '',
   };
 
   // Drop undefined / null / empty
@@ -117,43 +113,39 @@ function buildClinicalRecord(formData, sessionRef, checklistData) {
   return clean;
 }
 
-import { getAuthToken } from '../services/authToken';
+/** Sessions the patient declined to share are never exported. Legacy
+ *  sessions without the flag (consented == null) are included. */
+export function isRedcapEligible(session) {
+  return session.consented !== false && !!session.formData;
+}
 
-/**
- * Submit a screening record to REDCap via the proxy worker.
- * Returns { success: true } or { success: false, error: string }.
- */
-export async function submitToRedcap(formData, sessionRef, checklistData) {
-  const proxyUrl = import.meta.env.VITE_REDCAP_PROXY_URL;
-  if (!proxyUrl) {
-    return { success: false, error: 'REDCap proxy not configured' };
+function csvCell(v) {
+  const str = String(v);
+  return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+/** One REDCap import row per session; header is record_id then every field used. */
+export function buildRedcapCsv(sessions) {
+  const records = sessions.map((s) =>
+    buildClinicalRecord(s.formData, s.sessionRef ?? s.id, s.checklistData),
+  );
+  const cols = ['record_id'];
+  for (const r of records) {
+    for (const k of Object.keys(r)) if (!cols.includes(k)) cols.push(k);
   }
+  const lines = [cols.join(',')];
+  for (const r of records) lines.push(cols.map((c) => (r[c] === undefined ? '' : csvCell(r[c]))).join(','));
+  return lines.join('\r\n') + '\r\n';
+}
 
-  const record = buildClinicalRecord(formData, sessionRef, checklistData);
-
-  try {
-    // The proxy requires a verified Mount Sinai Entra token on every route.
-    // It previously accepted any POST that carried a plausible Origin header,
-    // which meant anyone could write records into the study database.
-    const token = await getAuthToken();
-
-    const res = await fetch(proxyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ record }),
-    });
-    if (res.status === 401) {
-      throw new Error('Your Mount Sinai sign-in is no longer valid. Please sign in again.');
-    }
-    if (!res.ok) {
-      throw new Error(`Proxy returned HTTP ${res.status}`);
-    }
-    return { success: true };
-  } catch (err) {
-    console.error('REDCap submit failed:', err);
-    return { success: false, error: err?.message || 'Submission failed' };
-  }
+export function downloadRedcapCsv(sessions, filename) {
+  const blob = new Blob([buildRedcapCsv(sessions)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename ?? `epsa_redcap_import_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

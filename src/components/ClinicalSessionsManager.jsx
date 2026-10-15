@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   TrashIcon, DownloadIcon, UploadIcon, PrinterIcon,
   ChevronDownIcon, ChevronUpIcon, ArrowLeftIcon,
-  SendIcon, RefreshCwIcon, PlusIcon, ZapIcon,
-  CloudUploadIcon, CloudDownloadIcon, CalculatorIcon
+  RefreshCwIcon, PlusIcon, ZapIcon,
+  CheckIcon, CalculatorIcon, FileSpreadsheetIcon
 } from 'lucide-react';
-import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, mergeSessions, setSessionConsent, updateSessionStep2, updateSessionResults } from '../services/clinicalSessionService';
-import { isTursoConfigured, pushSessions, pullSessions, getSyncedKeys, syncKey, markPendingDelete, getPendingDeleteCount, isPushable, markRedcapPushed } from '../services/tursoService';
-import { submitToRedcap } from '../utils/redcapSubmit';
+import { getClinicalSessions, deleteClinicalSession, clearAllClinicalSessions, exportSessionsAsJson, importSessionsFromFile, saveClinicalSession, setSessionConsent, updateSessionStep2, updateSessionResults, markSessionsRedcapExported } from '../services/clinicalSessionService';
+import { downloadRedcapCsv, isRedcapEligible } from '../utils/redcapExport';
 import ClinicalModeResult from './ClinicalModeResult.jsx';
 import ImportWizard from './ImportWizard.jsx';
 import { KIOSK_ENGINE } from '../utils/kioskEngine';
@@ -30,7 +29,7 @@ function formatDate(iso) {
   } catch { return iso; }
 }
 
-function Part2EntryForm({ session, uid, onSaved, onCancel, tursoReady }) {
+function Part2EntryForm({ session, uid, onSaved, onCancel }) {
   const [psa, setPsa] = useState('');
   const [pirads, setPirads] = useState('0');
   const [onHormonalTherapy, setOnHormonalTherapy] = useState(false);
@@ -52,8 +51,7 @@ function Part2EntryForm({ session, uid, onSaved, onCancel, tursoReady }) {
         onHormonalTherapy,
         hormonalTherapyType: '',
       };
-      const updated = await updateSessionStep2(uid, session, step2);
-      if (tursoReady && updated) await pushSessions([updated]);
+      await updateSessionStep2(uid, session, step2);
       onSaved();
     } catch (err) {
       setError(err.message || 'Save failed.');
@@ -109,10 +107,8 @@ function Part2EntryForm({ session, uid, onSaved, onCancel, tursoReady }) {
   );
 }
 
-function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoReady, tursoSynced }) {
+function SessionRow({ session, uid, onDeleted, onConsented, onUpdated }) {
   const [expanded, setExpanded] = useState(false);
-  const [pushing, setPushing] = useState(false);
-  const [pushStatus, setPushStatus] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [consenting, setConsenting] = useState(false); // false | 'confirm' | 'working' | 'err'
   const [enteringPart2, setEnteringPart2] = useState(false);
@@ -137,38 +133,17 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
     await onDeleted(session);
   }
 
-  async function handlePushRedcap() {
-    if (!session.formData) return;
-    setPushing(true);
-    setPushStatus(null);
-    try {
-      const result = await submitToRedcap(session.formData, session.sessionRef, session.checklistData);
-      if (!result.success) throw new Error(result.error);
-      setPushStatus('ok');
-      // Persist the timestamp locally and in Turso
-      if (tursoReady) {
-        await markRedcapPushed(session).catch(() => {});
-      }
-      await onUpdated?.();
-    } catch {
-      setPushStatus('err');
-    } finally {
-      setPushing(false);
-    }
-  }
-
   function handlePrint() {
     window.print();
   }
 
   // Patient signed the consent form after the fact (or staff confirm it):
-  // record consent and push the session to the cloud.
+  // record consent so the session is included in the REDCap export.
   async function handleMarkConsented() {
     if (consenting !== 'confirm') { setConsenting('confirm'); return; }
     setConsenting('working');
     try {
       await setSessionConsent(uid, session, true);
-      if (tursoReady) await pushSessions([{ ...session, consented: true }]);
       setConsenting(false);
       await onConsented?.(session);
     } catch {
@@ -213,21 +188,13 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
           {storageLabel}
         </span>
         {noConsent && (
-          <span className="csm-row-badge csm-row-badge--noconsent" title="Patient declined cloud storage — this session is never pushed">
+          <span className="csm-row-badge csm-row-badge--noconsent" title="Patient declined — this session is never exported to REDCap">
             No consent
           </span>
         )}
         {session.redcapPushedAt && (
-          <span className="csm-row-badge csm-row-badge--redcap" title={`Pushed to REDCap on ${new Date(session.redcapPushedAt).toLocaleString()}`}>
+          <span className="csm-row-badge csm-row-badge--redcap" title={`Exported for REDCap on ${new Date(session.redcapPushedAt).toLocaleString()}`}>
             REDCap ✓
-          </span>
-        )}
-        {tursoReady && !noConsent && (
-          <span
-            className={`csm-row-badge csm-row-badge--${tursoSynced ? 'synced' : 'unsynced'}`}
-            title={tursoSynced ? 'This case exists in the Turso cloud database' : 'Not yet pushed to the Turso cloud database'}
-          >
-            {tursoSynced ? 'Turso ✓' : 'Not synced'}
           </span>
         )}
         {expanded ? <ChevronUpIcon size={16} /> : <ChevronDownIcon size={16} />}
@@ -255,22 +222,6 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
                 <ZapIcon size={14} /> {enteringPart2 ? 'Cancel' : 'Enter PSA Results'}
               </button>
             )}
-            {tursoSynced && (
-              <button
-                type="button"
-                className={`csm-action-btn csm-action-btn--redcap${pushStatus === 'ok' ? ' csm-action-btn--ok' : pushStatus === 'err' ? ' csm-action-btn--err' : ''}`}
-                onClick={handlePushRedcap}
-                disabled={pushing}
-                title={session.redcapPushedAt ? `Last pushed ${new Date(session.redcapPushedAt).toLocaleString()}` : 'Push to REDCap'}
-              >
-                <SendIcon size={14} />
-                {pushing ? 'Pushing…'
-                  : pushStatus === 'ok' ? 'Sent!'
-                  : pushStatus === 'err' ? 'Failed'
-                  : session.redcapPushedAt ? 'Re-push to REDCap'
-                  : 'Push to REDCap'}
-              </button>
-            )}
             {noConsent && (
               <button
                 type="button"
@@ -278,13 +229,13 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
                 onClick={handleMarkConsented}
                 onBlur={() => { if (consenting === 'confirm') setConsenting(false); }}
                 disabled={consenting === 'working'}
-                title="Record that the patient has signed the consent form, then sync this session to the cloud"
+                title="Record that the patient has signed the consent form, so this session is included in the REDCap export"
               >
-                <CloudUploadIcon size={14} />
-                {consenting === 'working' ? 'Syncing…'
+                <CheckIcon size={14} />
+                {consenting === 'working' ? 'Saving…'
                   : consenting === 'confirm' ? 'Confirm consent signed?'
                   : consenting === 'err' ? 'Failed — retry'
-                  : 'Mark consented & sync'}
+                  : 'Mark consented'}
               </button>
             )}
             <button
@@ -303,7 +254,6 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
             <Part2EntryForm
               session={session}
               uid={uid}
-              tursoReady={tursoReady}
               onSaved={() => { setEnteringPart2(false); onUpdated?.(); }}
               onCancel={() => setEnteringPart2(false)}
             />
@@ -346,21 +296,6 @@ function SessionRow({ session, uid, onDeleted, onConsented, onUpdated, tursoRead
   );
 }
 
-const TEST_REDCAP_RECORD = {
-  age: '55',
-  race: 'white',
-  family_history: '1',
-  genetic_risk: 'no',
-  bmi: '26.5',
-  exercise: 'moderate',
-  smoking: 'never',
-  chemical_exposure: 'no',
-  diet_pattern: 'western',
-  comorbidities: 0,
-  ipss_qol: '2',
-  erection_confidence: '4',
-};
-
 export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -368,14 +303,9 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
   const [importMsg, setImportMsg] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
   const [confirmRecalc, setConfirmRecalc] = useState(false);
-  const [redcapTest, setRedcapTest] = useState(null); // null | 'testing' | 'ok' | 'err'
   const [confirmClear, setConfirmClear] = useState(false); // false | 'confirm' | 'exporting'
   const [filterTier, setFilterTier] = useState('all'); // 'all' | 'low' | 'intermediate' | 'elevated'
   const [filterStep2, setFilterStep2] = useState('all'); // 'all' | 'needs' | 'done'
-  const [syncing, setSyncing] = useState(null); // 'push' | 'pull' | null
-  const [syncedKeys, setSyncedKeys] = useState(() => getSyncedKeys());
-  const [pendingDeletes, setPendingDeletes] = useState(() => getPendingDeleteCount());
-  const tursoReady = isTursoConfigured();
   const KIOSK_KEY = 'epsa_kiosk_mode';
   const [kioskMode, setKioskMode] = useState(() => {
     try { return localStorage.getItem(KIOSK_KEY) === '1'; } catch { return false; }
@@ -436,7 +366,7 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
       } catch { failed += 1; }
     }
     updateSessionResults(updates);
-    setImportMsg(`Recalculated ${updates.length} session${updates.length !== 1 ? 's' : ''} — ${changed} score${changed !== 1 ? 's' : ''} changed${failed ? `, ${failed} could not be calculated` : ''}. Push to Cloud to update synced copies.`);
+    setImportMsg(`Recalculated ${updates.length} session${updates.length !== 1 ? 's' : ''} — ${changed} score${changed !== 1 ? 's' : ''} changed${failed ? `, ${failed} could not be calculated` : ''}. Re-export to REDCap to update records already imported.`);
     refresh();
   }
 
@@ -464,7 +394,7 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
     total: sessions.length,
     today: sessions.filter(s => s.createdAt && new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) === today).length,
     needsStep2: sessions.filter(s => !(s.step2 || s.postResult)).length,
-    pendingRedcap: sessions.filter(s => !s.redcapPushedAt && s.consented !== false).length,
+    pendingRedcap: sessions.filter(s => !s.redcapPushedAt && isRedcapEligible(s)).length,
   };
 
   const filteredSessions = sessions.filter(s => {
@@ -474,74 +404,29 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
     return true;
   });
 
-  async function handlePushCloud() {
-    if ((!sessions.length && !pendingDeletes) || syncing) return;
-    setSyncing('push');
-    setImportMsg(null);
-    try {
-      const { pushed, deleted } = await pushSessions(sessions);
-      const skipped = sessions.filter(s => !isPushable(s)).length;
-      setSyncedKeys(getSyncedKeys());
-      setPendingDeletes(getPendingDeleteCount());
-      const parts = [`Pushed ${pushed} session${pushed !== 1 ? 's' : ''} to cloud`];
-      if (skipped) parts.push(`kept ${skipped} non-consented session${skipped !== 1 ? 's' : ''} local`);
-      if (deleted) parts.push(`removed ${deleted} deleted case${deleted !== 1 ? 's' : ''}`);
-      setImportMsg(`${parts.join('; ')}.`);
-    } catch (err) {
-      setImportMsg(`Push failed: ${err.message}`);
-    } finally {
-      setSyncing(null);
-    }
+  // New consented sessions if there are any; otherwise every consented session
+  // (a re-export, e.g. after scores were recalculated). REDCap's import updates
+  // existing records with the same record_id, so re-importing is safe.
+  function handleExportRedcap() {
+    const eligible = sessions.filter(isRedcapEligible);
+    const pending = eligible.filter(s => !s.redcapPushedAt);
+    const batch = pending.length ? pending : eligible;
+    if (!batch.length) return;
+    downloadRedcapCsv(batch);
+    markSessionsRedcapExported(batch.map(s => s.id));
+    const skipped = sessions.length - eligible.length;
+    setImportMsg(`Exported ${batch.length} session${batch.length !== 1 ? 's' : ''} as a REDCap import CSV${skipped ? `; ${skipped} without consent left out` : ''}. Upload it in REDCap → Data Import Tool.`);
+    refresh();
   }
 
-  async function handlePullCloud() {
-    if (syncing) return;
-    setSyncing('pull');
-    setImportMsg(null);
-    try {
-      const pulled = await pullSessions();
-      const added = mergeSessions(pulled);
-      setSyncedKeys(getSyncedKeys());
-      setPendingDeletes(getPendingDeleteCount());
-      setImportMsg(`Pulled ${pulled.length} session${pulled.length !== 1 ? 's' : ''} from cloud (${added} new).`);
-      await refresh();
-    } catch (err) {
-      setImportMsg(`Pull failed: ${err.message}`);
-    } finally {
-      setSyncing(null);
-    }
-  }
-
-  async function handleSessionDeleted(session) {
-    if (tursoReady && (await markPendingDelete(session))) {
-      setSyncedKeys(getSyncedKeys());
-      setPendingDeletes(getPendingDeleteCount());
-      setImportMsg('Session deleted from this device. It will be removed from Turso on the next push.');
-    } else {
-      setImportMsg('Session deleted.');
-    }
+  async function handleSessionDeleted() {
+    setImportMsg('Session deleted.');
     await refresh();
   }
 
   async function handleSessionConsented(session) {
-    setSyncedKeys(getSyncedKeys());
-    setImportMsg(`Consent recorded for ${session.sessionRef ?? session.id}${tursoReady ? ' — session synced to cloud' : ''}.`);
+    setImportMsg(`Consent recorded for ${session.sessionRef ?? session.id}.`);
     await refresh();
-  }
-
-  async function handleTestRedcap() {
-    if (redcapTest === 'testing') return;
-    setRedcapTest('testing');
-    setImportMsg(null);
-    const result = await submitToRedcap(TEST_REDCAP_RECORD, `test_${Date.now()}`);
-    if (result.success) {
-      setRedcapTest('ok');
-      setImportMsg('REDCap test submission succeeded.');
-    } else {
-      setRedcapTest('err');
-      setImportMsg(`REDCap test failed: ${result.error}`);
-    }
-    setTimeout(() => setRedcapTest(null), 4000);
   }
 
   async function handleImportBusflow() {
@@ -648,40 +533,15 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
         <button type="button" className="csm-toolbar-btn" onClick={() => setShowWizard(true)} title="Import kiosk or calculator JSON files with a preview">
           <UploadIcon size={15} /> Import Wizard
         </button>
-        {tursoReady && (
-          <>
-            <button
-              type="button"
-              className={`csm-toolbar-btn${syncing === 'push' ? ' csm-toolbar-btn--loading' : ''}`}
-              onClick={handlePushCloud}
-              disabled={(!sessions.length && !pendingDeletes) || !!syncing}
-              title={pendingDeletes
-                ? `Push all sessions and remove ${pendingDeletes} deleted case${pendingDeletes !== 1 ? 's' : ''} from the Turso cloud database`
-                : 'Push all sessions to the Turso cloud database (de-identified)'}
-            >
-              <CloudUploadIcon size={15} />
-              {syncing === 'push' ? 'Pushing…' : pendingDeletes ? `Push to Cloud (${pendingDeletes} to remove)` : 'Push to Cloud'}
-            </button>
-            <button
-              type="button"
-              className={`csm-toolbar-btn${syncing === 'pull' ? ' csm-toolbar-btn--loading' : ''}`}
-              onClick={handlePullCloud}
-              disabled={!!syncing}
-              title="Pull sessions from the Turso cloud database"
-            >
-              <CloudDownloadIcon size={15} /> {syncing === 'pull' ? 'Pulling…' : 'Pull from Cloud'}
-            </button>
-          </>
-        )}
         <button
           type="button"
-          className={`csm-toolbar-btn${redcapTest === 'ok' ? ' csm-toolbar-btn--ok' : redcapTest === 'err' ? ' csm-toolbar-btn--err' : ''}`}
-          onClick={handleTestRedcap}
-          disabled={redcapTest === 'testing'}
-          title="Send a dummy record to REDCap to verify the proxy is working"
+          className="csm-toolbar-btn"
+          onClick={handleExportRedcap}
+          disabled={!sessions.some(isRedcapEligible)}
+          title="Download consented sessions as a CSV for REDCap's Data Import Tool. Nothing is uploaded from this device."
         >
-          <SendIcon size={15} />
-          {redcapTest === 'testing' ? 'Testing…' : redcapTest === 'ok' ? 'REDCap ✓' : redcapTest === 'err' ? 'REDCap ✗' : 'Test REDCap'}
+          <FileSpreadsheetIcon size={15} />
+          {stats.pendingRedcap ? `REDCap CSV (${stats.pendingRedcap} new)` : 'REDCap CSV (all)'}
         </button>
         {confirmClear === 'exporting' ? (
           <div className="csm-clear-confirm">
@@ -749,8 +609,6 @@ export default function ClinicalSessionsManager({ uid, onBack, onNewSession }) {
                   onDeleted={handleSessionDeleted}
                   onConsented={handleSessionConsented}
                   onUpdated={refresh}
-                  tursoReady={tursoReady}
-                  tursoSynced={syncedKeys.has(syncKey(s))}
                 />
               ))}
             </div>

@@ -8,10 +8,8 @@
 #
 # It would previously have listed VITE_TURSO_AUTH_TOKEN: the clinical sessions
 # database credential, inlined into every build and carrying full
-# read/write/delete over the whole clinical_sessions table. Turso now sits
-# behind the Entra-authenticated epsa-turso-proxy Worker and the browser holds
-# no database credential at all. ROTATE the old token — it was public in every
-# deployed bundle.
+# read/write/delete over the whole clinical_sessions table. The app no longer
+# uses Turso at all (sessions stay on the device). ROTATE/REVOKE the old token —
+# it was public in every deployed bundle.
 #
-# The remaining VITE_ vars are public by design: Azure client/tenant IDs and
-# Worker URLs.
+# The remaining VITE_ vars are public by design: Azure client/tenant IDs.

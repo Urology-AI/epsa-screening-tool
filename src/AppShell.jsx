@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { MsalProvider, useMsal, useIsAuthenticated } from '@azure/msal-react';
-import { PublicClientApplication, InteractionRequiredAuthError, InteractionStatus } from '@azure/msal-browser';
+import { PublicClientApplication, InteractionStatus } from '@azure/msal-browser';
 import ClinicalSessionsManager from './components/ClinicalSessionsManager.jsx';
 import './components/ClinicalSessionsManager.css';
 import { getOrCreateUid } from './services/clinicalSessionService';
-import { setAuthTokenProvider } from './services/authToken';
 import { msalConfig, loginRequest } from './config/msal.js';
 import { LockIcon, LogOutIcon } from 'lucide-react';
 import './App.css';
@@ -21,15 +20,12 @@ import './App.css';
  * /admin REQUIRES SIGN-IN. Everything that reads, exports or deletes stored
  * clinical sessions lives behind it.
  *
- * What makes the public root safe is not a login — it is that the browser no
- * longer holds any database credential. A consented public submission goes to
- * a single insert-only endpoint on the Turso proxy that cannot read, list,
- * update or delete anything. Compare the previous design, where the bundle
- * carried a token granting full read/write/delete over every clinical session.
+ * What makes the public root safe is not a login — it is that nothing is
+ * transmitted. Sessions are stored in this device's localStorage only; there
+ * is no cloud database and no credential in the bundle.
  *
- * REDCap is not reachable from the public flow at all. Staff review sessions
- * in /admin and push them to the study database from there, with a verified
- * identity on the request.
+ * REDCap is not reachable from the app at all. Staff review sessions in
+ * /admin and download a CSV that they upload with REDCap's Data Import Tool.
  */
 
 /**
@@ -92,38 +88,6 @@ function ShellContent() {
       })
       .catch((err) => setLoginError(err.message || 'Login failed'));
   }, [instance]);
-
-  /**
-   * Install the token provider used by every authenticated service call
-   * (Turso proxy and REDCap proxy alike).
-   *
-   * This supplies the ID TOKEN, not the Graph access token from the User.Read
-   * scope: the Worker checks `aud === AZURE_CLIENT_ID`, and a Graph access
-   * token carries Graph's audience instead and would be rejected.
-   */
-  useEffect(() => {
-    if (!isAuthenticated || accounts.length === 0) {
-      setAuthTokenProvider(null);
-      return;
-    }
-    setAuthTokenProvider(async () => {
-      try {
-        const res = await instance.acquireTokenSilent({
-          ...loginRequest,
-          account: accounts[0],
-        });
-        return res.idToken;
-      } catch (err) {
-        // Silent renewal failed (expired refresh token, revoked session,
-        // conditional-access change). Send the user back through login rather
-        // than letting the call fail with an opaque 401.
-        if (err instanceof InteractionRequiredAuthError) {
-          await instance.acquireTokenRedirect(loginRequest);
-        }
-        throw err;
-      }
-    });
-  }, [isAuthenticated, accounts, instance]);
 
   // The kiosk flow is heavy; load it only once past the auth gate.
   useEffect(() => {
